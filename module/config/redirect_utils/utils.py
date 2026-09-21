@@ -13,9 +13,11 @@
 - 服务器名称规范化
 """
 
+from datetime import datetime
+
 from module.config.deep import deep_get, deep_set
 from module.config.server import to_server
-from module.config.utils import filepath_args, read_file
+from module.config.utils import filepath_args, parse_value, read_file
 
 # 参数默认值只在真正需要迁移时读一次：args.json 很大，而迁移是极少数情况。
 _argument_defaults = None
@@ -27,6 +29,24 @@ def template_defaults():
     if _argument_defaults is None:
         _argument_defaults = read_file(filepath_args())
     return _argument_defaults
+
+
+def _is_default_config_value(value, schema):
+    """统一比较 JSON 字符串与运行器已解析的字段，特别是记录时间。"""
+    return parse_value(value, data=schema) == parse_value(schema['value'], data=schema)
+
+
+def _coerce_migrated_value(value, current, schema):
+    """把旧值转换成当前配置容器已经使用的类型。
+
+    ConfigUpdater 的 ``new`` 已经过 ``parse_value``，日期目标是 datetime；
+    ConfigService 合并模板时则保留 JSON 字符串。迁移必须跟随目标类型，不能让
+    API 返回 datetime，也不能让运行时配置留下字符串时间。
+    """
+    value = parse_value(value, data=schema)
+    if isinstance(current, str) and isinstance(value, datetime):
+        return value.isoformat(sep=' ')
+    return value
 
 
 def upload_redirect(value):
@@ -180,7 +200,7 @@ def execute_fixed_patrol_scan_redirect(value):
         return bool(value)
 
 
-def public_emotion_to_real_fleets_redirect(new, old):
+def public_emotion_to_real_fleets_redirect(new, old, defaults=None):
     """把共用心情的旧单槽位配置迁移到按真实舰队拆分的字段。
 
     拆分前 `General.PublicEmotion.Fleet*` 只表示一支舰队（当时的"共享池"）。
@@ -204,6 +224,7 @@ def public_emotion_to_real_fleets_redirect(new, old):
     Args:
         new (dict): 合并默认值后的新配置，会被就地修改。
         old (dict): 用户配置文件读出的原始配置。
+        defaults (dict | None): 参数 schema；默认使用运行器的参数定义。
 
     Returns:
         dict: 迁移后的新配置。
@@ -212,14 +233,23 @@ def public_emotion_to_real_fleets_redirect(new, old):
     if deep_get(old, f'{base}.FleetValue') is None:
         # 用户从未用过共用心情，新字段保持默认。
         return new
-    defaults = template_defaults()
+    # ConfigUpdater 使用仓库默认参数；API 服务可能指向隔离 root，必须使用
+    # 该 root 自己加载的 schema，避免工作目录下的 args.json 覆盖测试或部署配置。
+    defaults = template_defaults() if defaults is None else defaults
+    record_target = f'{base}.Fleet1Record'
+    record_schema = deep_get(defaults, record_target)
+    # 新字段已经写过有效记录时间，说明这份配置已完成迁移或已经运行记账。
+    # 即使旧 Fleet* 残留，也不能再用旧值覆盖当前账本。
+    if not _is_default_config_value(deep_get(new, record_target), record_schema):
+        return new
     for suffix in ('Value', 'Record', 'Control', 'Recover', 'Oath', 'Onsen'):
         value = deep_get(old, f'{base}.Fleet{suffix}')
         target = f'{base}.Fleet1{suffix}'
-        if value is None or deep_get(new, target) != deep_get(defaults, f'{target}.value'):
+        schema = deep_get(defaults, target)
+        if value is None or not _is_default_config_value(deep_get(new, target), schema):
             # 目标字段已经不是默认值：说明它被记账或手改过，不再拿旧值覆盖。
             continue
-        deep_set(new, keys=target, value=value)
+        deep_set(new, keys=target, value=_coerce_migrated_value(value, deep_get(new, target), schema))
     return new
 
 

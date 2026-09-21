@@ -13,6 +13,10 @@ const ajv = new Ajv({strict: false, useDefaults: true})
 const validators = Object.fromEntries(Object.entries(contract.methods).map(([method, entry]) => [method, ajv.compile(entry.params)]))
 const revision = values => createHash('sha256').update(JSON.stringify(values)).digest('hex')
 const timestamp = date => date.toISOString().slice(0, 19).replace('T', ' ')
+const localTimestamp = date => {
+  const pad = value => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
 const translate = key => key.split('.').reduce((value, part) => value?.[part], locales['zh-CN']) ?? key
 export const fail = (code, message, details = null) => {throw Object.assign(new Error(message), {code, details})}
 
@@ -281,6 +285,11 @@ export function createMockState({empty = false} = {}) {
           if (field.mode === 'restricted_lua') requireValidMockStrategy(value)
           data.values[task] ??= {}; data.values[task][group] ??= {}
           data.values[task][group][arg] = value
+          // 与真实后端一致：仅成功提交的 Value 才在同一事务中更新对应的本地记录时间。
+          if (arg.endsWith('Value')) {
+            const record = `${arg.slice(0, -'Value'.length)}Record`
+            if (Object.hasOwn(data.values[task][group], record)) data.values[task][group][record] = localTimestamp(new Date())
+          }
           if (group === 'ShopAdvanced') affectedShopTasks.add(task)
         }
         validateMockAdvancedGroups(data.values, affectedShopTasks)

@@ -20,7 +20,7 @@ import { useInstanceOverview } from '../components/useInstanceOverview'
 import { editor, prepareValue } from '../config/editors'
 import { EditStatus } from '../components/EditStatus'
 import { isFieldVisible } from './configVisibility'
-import { managedBySharedEmotion, parseParticipatingTasks } from './sharedEmotion'
+import { fleetUsageOf, managedBySharedEmotion, parseParticipatingTasks, SLOT_FIELDS, sharedEmotionEnabled } from './sharedEmotion'
 
 /**
  * 锁定提示文案：把 `{panel}` 换成跳转到共用心情面板的链接。
@@ -156,21 +156,41 @@ export function TaskConfig() {
   //
   // 与"面板是否显示"分开判断：关闭共用心情时这些字段同样不渲染——配置里留着的是
   // 上一轮运行算出的账本值，平铺 6 支舰队 × 6 项只会让人以为还要在这里配心情。
+  // 共用心情的舰队字段由面板动态生成，不在 schema 的通用字段列表里；
+  // 搜索这些字段时仍需保留 PublicEmotion 分组，让面板按同一搜索词筛选。
+  const sharedPanelUsage = config && task === 'General' && sharedEmotionEnabled(config.values)
+    ? fleetUsageOf(config.values, schema, parseParticipatingTasks(config.values)) : []
+  const searchQuery = search.trim().toLowerCase()
+  const sharedPanelSearchMatch = Boolean(config && task === 'General' && searchQuery
+    && sharedPanelUsage.some(({fleet, tasks}) => {
+      // 面板本身会把舰队标题和监控任务作为可搜索文本；父组件也必须用同一规则
+      // 决定是否保留 PublicEmotion 分组，否则搜索“舰队1”时分组会先被父层过滤掉。
+      const fleetTitle = ui('task.sharedEmotionFleetTitle', {fleet})
+      const scope = `${fleetTitle} ${tasks.join(' ')}`.toLowerCase()
+      if (scope.includes(searchQuery)) return true
+      return SLOT_FIELDS.some(suffix => {
+        const argument = `Fleet${fleet}${suffix}`
+        const field = schema?.args?.General?.PublicEmotion?.[argument]
+        if (!field) return false
+        const text = `General.PublicEmotion.${argument} ${t(`PublicEmotion.${argument}.name`)} ${t(`PublicEmotion.${argument}.help`)}`.toLowerCase()
+        return text.includes(searchQuery)
+      })
+    }))
   const visibleGroups = Object.entries(groups ?? {}).map(([group, fields]) => {
     const visible = Object.entries(fields).filter(([arg, field]) => {
       // 按真实舰队的字段归面板：启用时面板按用到的舰队分组展示，关闭时也不平铺。
       if (group === 'PublicEmotion' && task === 'General' && /^Fleet\d/.test(arg)) return false
       const edit = edits[`${task}.${group}.${arg}`]
       const value = edit?.status === 'saved' ? edit.value : config?.values[task]?.[group]?.[arg] ?? field.value
-      return isFieldVisible(arg, field, value) && `${t(`${group}.${arg}.name`)} ${group}.${arg}`.toLowerCase().includes(search.toLowerCase())
+      return isFieldVisible(arg, field, value) && `${t(`${group}.${arg}.name`)} ${group}.${arg}`.toLowerCase().includes(searchQuery)
     })
     return {group, visible}
-  }).filter(({visible}) => visible.length)
+  }).filter(({group, visible}) => visible.length || (group === 'PublicEmotion' && task === 'General' && sharedPanelSearchMatch))
 
   const tool = Object.values(schema?.menu ?? {}).some(group => group.page === 'tool' && group.tasks.includes(task))
   // 指挥喵评分保留参数卡（评分来源、截图目录等），报告面板挂在参数卡上方。
   const scorePanel = task === 'MeowfficerScore' ? <MeowfficerScorePanel instance={instance}/> : null
-  const showConfigToolbar = task !== 'FleetInfo' && Boolean(groups) && (visibleGroups.length > 0 || Boolean(search))
+  const showConfigToolbar = task !== 'FleetInfo' && Boolean(groups) && (visibleGroups.length > 0 || Boolean(searchQuery))
 
   if (!config) return error ? <ErrorBox message={error} retry={reload} /> : <Loading />
 
@@ -294,10 +314,10 @@ export function TaskConfig() {
           关闭共用心情时也挂载（组件自己不渲染内容）：它要看得见开关被打开的那一瞬间，
           开启等于从零开始监听当前清单，涉及的舰队要重新播种。 */}
       {group === 'PublicEmotion' && task === 'General' && (
-        <SharedEmotionPanel values={config.values} schema={schema} queue={queue} edits={edits}/>
+        <SharedEmotionPanel values={config.values} schema={schema} queue={queue} edits={edits} search={search}/>
       )}
     </section>
-  ))}    {search && !visibleGroups.length && <Empty icon={<Search size={26} />} title={ui('task.noConfigFound')}>{ui('task.tryOtherKeyword')}</Empty>}
+  ))}
   </>
 
   const hasGroups = task !== 'FleetInfo' && Boolean(groups) && visibleGroups.length > 0
@@ -366,8 +386,8 @@ export function TaskConfig() {
   const groupsSection = task === 'FleetInfo' ? (
     <FleetInfo value={config.values.FleetInfo?.FleetInfo?.Result} />
   ) : !hasGroups ? (
-    (search || !tool) && <Empty icon={<Settings2 size={30} />} title={ui('task.noConfig')}>
-      {search ? ui('task.tryOtherKeyword') : ui('task.viewRelated')}
+    (searchQuery || !tool) && <Empty icon={searchQuery ? <Search size={26} /> : <Settings2 size={30} />} title={ui(searchQuery ? 'task.noConfigFound' : 'task.noConfig')}>
+      {searchQuery ? ui('task.tryOtherKeyword') : ui('task.viewRelated')}
     </Empty>
   ) : groupCardsBlock
 

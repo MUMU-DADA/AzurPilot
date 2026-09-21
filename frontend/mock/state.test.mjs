@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createMockState } from './state.mjs'
 
 describe('前端模拟服务', () => {
@@ -27,6 +27,44 @@ describe('前端模拟服务', () => {
     dispatch('instances.delete', {instance: 'second', revision: config.revision})
     expect(dispatch('instances.list').map(item => item.name)).toEqual(['first'])
     expect(createMockState({empty: true}).dispatch('instances.list')).toEqual([])
+  })
+  it('成功提交心情值时同步更新本地记录时间，未修改的舰队保留原时间', () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date(2026, 8, 21, 14, 37, 45))
+      const {dispatch} = createMockState()
+      const initial = dispatch('config.get', {instance: 'demo-main'})
+      const saved = dispatch('config.patch', {
+        instance: 'demo-main', changes: [
+          {path: 'General.PublicEmotion.Fleet1Value', value: 77},
+          {path: 'Main.Emotion.Fleet1Value', value: 66},
+        ],
+      })
+      expect(saved.values.General.PublicEmotion.Fleet1Value).toBe(77)
+      expect(saved.values.General.PublicEmotion.Fleet1Record).toBe('2026-09-21 14:37:45')
+      expect(saved.values.Main.Emotion.Fleet1Value).toBe(66)
+      expect(saved.values.Main.Emotion.Fleet1Record).toBe('2026-09-21 14:37:45')
+      expect(saved.values.General.PublicEmotion.Fleet2Record).toBe(initial.values.General.PublicEmotion.Fleet2Record)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+  it('心情值被拒绝或整批保存失败时，数值和记录时间都不改变', () => {
+    const {dispatch} = createMockState()
+    const initial = dispatch('config.get', {instance: 'demo-main'})
+    for (const value of ['不是数字', 77.5]) {
+      expect(() => dispatch('config.patch', {
+        instance: 'demo-main', changes: [{path: 'General.PublicEmotion.Fleet1Value', value}],
+      })).toThrow(/参数类型/)
+      expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
+    }
+    expect(() => dispatch('config.patch', {
+      instance: 'demo-main', changes: [
+        {path: 'General.PublicEmotion.Fleet1Value', value: 77},
+        {path: 'General.PublicEmotion.Fleet2Value', value: 66.5},
+      ],
+    })).toThrow(/参数类型/)
+    expect(dispatch('config.get', {instance: 'demo-main'})).toEqual(initial)
   })
   it('实例名允许汉字与数字，仍拒绝路径字符与保留名', () => {
     const {dispatch} = createMockState({empty: true})

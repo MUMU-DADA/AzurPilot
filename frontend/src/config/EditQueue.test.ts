@@ -17,6 +17,23 @@ function deferred() {
 afterEach(() => vi.useRealTimers())
 
 describe('即时配置队列', () => {
+  it('最后一个回执触发后续写入时，排空过程仍会继续提交', async () => {
+    const send = vi.fn().mockResolvedValue(undefined)
+    const queue = new EditQueue('test', {ready: () => true, send}, storage())
+    let added = false
+    queue.subscribe(() => {
+      if (!added && queue.getSnapshot().edits.enabled?.status === 'saved') {
+        added = true
+        // 模拟启用共用心情后，React effect 在回执之后才把播种字段加入队列。
+        queueMicrotask(() => queue.change('record', '2026-09-21 12:00:00'))
+      }
+    })
+    queue.change('enabled', true)
+    await expect(queue.settled()).resolves.toBeUndefined()
+    expect(send.mock.calls).toEqual([['enabled', true], ['record', '2026-09-21 12:00:00']])
+    expect(queue.getSnapshot().edits.record.status).toBe('saved')
+  })
+
   it('新读取只清理此前确认的输入，不能清理读取期间完成的新修改', async () => {
     const send = vi.fn().mockResolvedValue(undefined)
     const queue = new EditQueue('test', {ready: () => true, send}, storage())

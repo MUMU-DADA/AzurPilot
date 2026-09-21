@@ -86,27 +86,56 @@ function fleetSetting(
 export function fleetRolesOf(
   values: Values, schema: Schema | undefined, task: string,
 ): FleetUse {
-  const {fleet1, fleet2, order} = fleetSetting(values, schema, task)
+  const roleSets = fleetRoleSetsOf(values, schema, task)
   const roles: Record<number, number> = {}
-  if (order === 'fleet1_all_fleet2_standby') {
-    if (fleet1) roles[fleet1] = 1
-  } else if (order === 'fleet1_standby_fleet2_all') {
-    if (fleet2) roles[fleet2] = 2
-  } else if (fleet1 && fleet2 && fleet1 !== fleet2) {
-    roles[fleet1] = 1
-    roles[fleet2] = 2
-  } else if (fleet1) {
-    roles[fleet1] = 1
-  } else if (fleet2) {
-    roles[fleet2] = 2
+  for (const [fleet, roleList] of Object.entries(roleSets)) {
+    // 保持旧 API 的单角色视图；需要处理同号双槽位的调用方使用
+    // fleetRoleSetsOf() 读取完整职能列表。
+    if (roleList.length) roles[Number(fleet)] = roleList[0]
   }
   return {task, roles}
+}
+
+/**
+ * 返回真实舰队到所有逻辑职能的映射。
+ *
+ * 后端允许两队分工时把 Fleet1 与 Fleet2 配成同一个真实舰队。旧的
+ * `real_fleets_of()` 兼容映射会保留一个角色，但运行时两个角色都落到同一账本；
+ * 面板的最小心情与任务槽位镜像必须保留两个角色，否则会漏读较低的槽位或只同步一边。
+ */
+export function fleetRoleSetsOf(
+  values: Values, schema: Schema | undefined, task: string,
+): Record<number, number[]> {
+  // 配置清单允许手工输入，未知任务不会被后端绑定；不要把它误当成默认的
+  // Fleet1 任务，否则面板会凭空展示并播种一支并未出击的舰队。
+  if (!Object.prototype.hasOwnProperty.call(values, task) && !schema?.args?.[task]) {
+    return {}
+  }
+  const {fleet1, fleet2, order} = fleetSetting(values, schema, task)
+  const roleSets: Record<number, number[]> = {}
+  const add = (fleet: number, role: number) => {
+    if (!fleet) return
+    const roles = roleSets[fleet] ?? (roleSets[fleet] = [])
+    if (!roles.includes(role)) roles.push(role)
+  }
+  if (order === 'fleet1_all_fleet2_standby') {
+    add(fleet1, 1)
+  } else if (order === 'fleet1_standby_fleet2_all') {
+    add(fleet2, 2)
+  } else {
+    // 两队分工时，同一个真实舰队可以同时承担道中和 Boss；两个角色都要保留。
+    add(fleet1, 1)
+    add(fleet2, 2)
+  }
+  return roleSets
 }
 
 /** 共用心情任务名单，按半角逗号拆分。 */
 export function parseTasks(raw: unknown): string[] {
   if (typeof raw !== 'string') return []
-  return raw.split(',').map(task => task.trim()).filter(Boolean)
+  // 配置可由用户直接编辑，重复任务名会让面板重复显示任务标签，并令监控签名
+  // 无意义地变化。保留首次出现的顺序，去掉重复项。
+  return [...new Set(raw.split(',').map(task => task.trim()).filter(Boolean))]
 }
 
 /** 参与共用心情的任务名单，取自当前实例的配置。 */
@@ -127,22 +156,22 @@ export function sharedEmotionEnabled(values: Values): boolean {
 export function fleetUsageOf(
   values: Values, schema: Schema | undefined, tasks: string[],
 ): FleetUsage[] {
-  const byFleet = new Map<RealFleet, FleetUse[]>()
+  const byFleet = new Map<RealFleet, FleetUsage>()
   for (const task of tasks) {
-    const use = fleetRolesOf(values, schema, task)
-    for (const key of Object.keys(use.roles)) {
+    const roleSets = fleetRoleSetsOf(values, schema, task)
+    const {order} = fleetSetting(values, schema, task)
+    const reversed = ['fleet1_boss_fleet2_mob', 'fleet1_standby_fleet2_all'].includes(order)
+    for (const [key, roles] of Object.entries(roleSets)) {
       const fleet = Number(key)
-      if (!byFleet.has(fleet)) byFleet.set(fleet, [])
-      byFleet.get(fleet)!.push(use)
+      const usage = byFleet.get(fleet) ?? {fleet, tasks: [], roles: []}
+      usage.tasks.push(task)
+      // 账本槽位沿用 Fleet1/Fleet2；展示职能则随舰队顺序反转。
+      const duties = roles.map(role => reversed ? 3 - role : role)
+      usage.roles = [...new Set([...usage.roles, ...duties])].sort()
+      byFleet.set(fleet, usage)
     }
   }
-  return [...byFleet.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([fleet, users]) => ({
-      fleet,
-      tasks: users.map(use => use.task),
-      roles: [...new Set(users.map(use => use.roles[fleet]))].sort(),
-    }))
+  return [...byFleet.values()].sort((a, b) => a.fleet - b.fleet)
 }
 
 /**
@@ -214,7 +243,7 @@ export type EmotionWrites = Map<string, Value>
  * 条目里也包含刚提交成功、config 快照还没刷新的那些——它们的值就是要写下去的值，
  * 读它比读快照更接近用户此刻看到的东西。
  */
-export interface PendingEdits {[path: string]: {value: Value}}
+export interface PendingEdits {[path: string]: {value: Value; error?: string}}
 
 /** 写入计划器的状态：上次清单签名 + 上次下发的整批写入指纹。 */
 export interface EmotionWriteState {
@@ -357,15 +386,19 @@ export function moraleMirrorOf(
 ): EmotionWrites {
   const writes: EmotionWrites = new Map()
   for (const task of tasks) {
-    const roles = fleetRolesOf(values, schema, task).roles
-    // 按职能顺序（道中 → Boss）输出，读起来与任务图里的字段顺序一致。
-    const ordered = Object.keys(roles).map(Number).sort((a, b) => roles[a] - roles[b])
-    for (const fleet of ordered) {
-      const argument = `Fleet${roles[fleet]}`
+    const roles = fleetRoleSetsOf(values, schema, task)
+    // 按职能顺序（道中 → Boss）输出，读起来与任务图里的字段顺序一致；
+    // 同一真实舰队占两个槽位时仍会输出两条镜像。
+    const ordered = Object.entries(roles)
+      .flatMap(([fleet, roleList]) => roleList.map(role => ({fleet: Number(fleet), role})))
+      .sort((a, b) => a.role - b.role || a.fleet - b.fleet)
+    for (const {fleet, role} of ordered) {
       const shared = live[fleet]
         ?? toMorale(boundValue(values, schema, 'General', 'PublicEmotion', `Fleet${fleet}Value`))
+      if (shared === undefined) continue
+      const argument = `Fleet${role}`
       const current = boundValue(values, schema, task, 'Emotion', `${argument}Value`)
-      if (shared === undefined || Number(shared) === Number(current)) continue
+      if (Number(shared) === Number(current)) continue
       writes.set(`${task}.Emotion.${argument}Value`, shared)
     }
   }
@@ -427,13 +460,15 @@ export function minimumMoraleOf(
 ): Record<RealFleet, number> {
   const minimums: Record<RealFleet, number> = {}
   for (const task of tasks) {
-    const roles = fleetRolesOf(values, schema, task).roles
+    const roles = fleetRoleSetsOf(values, schema, task)
     for (const key of Object.keys(roles)) {
       const fleet = Number(key)
-      // 该任务自己记的心情同样按职能索引，因此用角色回查。
-      const value = toMorale(boundValue(values, schema, task, 'Emotion', `Fleet${roles[fleet]}Value`))
-      if (value === undefined) continue
-      if (!(fleet in minimums) || value < minimums[fleet]) minimums[fleet] = value
+      // 同一真实舰队可能同时占两个任务槽位，两个槽位都要参与取最小值。
+      for (const role of roles[fleet]) {
+        const value = toMorale(boundValue(values, schema, task, 'Emotion', `Fleet${role}Value`))
+        if (value === undefined) continue
+        if (!(fleet in minimums) || value < minimums[fleet]) minimums[fleet] = value
+      }
     }
   }
   return minimums
@@ -460,7 +495,9 @@ export function ledgerMaps(
   for (const fleet of REAL_FLEETS) {
     const argument = `Fleet${fleet}Value`
     const recordArgument = `Fleet${fleet}Record`
-    const live = toMorale(edits[`General.PublicEmotion.${argument}`]?.value)
+    const edit = edits[`General.PublicEmotion.${argument}`]
+    // 已被校验拒绝的草稿只能留在输入框，不能镜像到其他任务账本。
+    const live = (edit?.error ? undefined : toMorale(edit?.value))
       ?? toMorale(values?.General?.PublicEmotion?.[argument])
     if (live !== undefined) current[fleet] = live
     const record = edits[`General.PublicEmotion.${recordArgument}`]?.value

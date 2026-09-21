@@ -19,6 +19,8 @@ import {
 interface Props {
   values: Values
   schema?: Schema
+  /** 与任务设置页共用的搜索词；面板字段也应遵循同一套过滤语义。 */
+  search?: string
   /** 与任务设置页共用的编辑队列，保证两处改动走同一套暂存与重试逻辑。 */
   queue: {change: (path: string, value: Value, payload?: Value, error?: string) => void; retry: () => void}
   edits: Record<string, Edit>
@@ -41,11 +43,13 @@ const READONLY_FIELDS = new Set(['Record'])
  * 关闭共用心情时这个组件仍然挂载（只是不渲染内容）：它要看得见"开关被打开"这一
  * 瞬间——开启等于从零开始监听当前清单，涉及的舰队要全部重新播种。
  */
-export function SharedEmotionPanel({values, schema, queue, edits}: Props) {
+export function SharedEmotionPanel({values, schema, queue, edits, search = ''}: Props) {
   const {t, ui} = useApp()
   const enabled = sharedEmotionEnabled(values)
   const tasks = parseTasks(values?.General?.PublicEmotion?.Tasks)
   const usage = fleetUsageOf(values, schema, tasks)
+  const query = search.trim().toLowerCase()
+  const matches = (text: string) => !query || text.toLowerCase().includes(query)
   const planned = useRef<EmotionWriteState>({signature: '', emitted: ''})
   // undefined 表示首次渲染：刷新页面时开关本来就是开的，不该当成"刚开启"重播。
   const wasEnabled = useRef<boolean | undefined>(undefined)
@@ -92,10 +96,22 @@ export function SharedEmotionPanel({values, schema, queue, edits}: Props) {
           {ui('task.sharedEmotionNoCalculateHint', {tasks: blind.join(' · ')})}
         </p>
       )}
-      {usage.map(({fleet, tasks: users, roles}) => (
-        <section className="shared-emotion-fleet" key={fleet}>
+      {usage.map(({fleet, tasks: users, roles}) => {
+        const fleetTitle = ui('task.sharedEmotionFleetTitle', {fleet})
+        const fleetScope = matches(`${fleetTitle} ${users.join(' ')}`)
+        const fields = SLOT_FIELDS.map(suffix => {
+          const argument = `Fleet${fleet}${suffix}`
+          const field = schema?.args?.General?.PublicEmotion?.[argument]
+          if (!field) return null
+          const label = t(`PublicEmotion.${argument}.name`)
+          const help = t(`PublicEmotion.${argument}.help`)
+          return {suffix, argument, field, label, help}
+        }).filter((field): field is NonNullable<typeof field> => Boolean(field))
+        const visibleFields = fleetScope ? fields : fields.filter(({argument, label, help}) => matches(`General.PublicEmotion.${argument} ${label} ${help}`))
+        if (!visibleFields.length) return null
+        return <section className="shared-emotion-fleet" key={fleet}>
           <div className="shared-emotion-fleet-head">
-            <h3>{ui('task.sharedEmotionFleetTitle', {fleet})}</h3>
+            <h3>{fleetTitle}</h3>
             <span className="small-label">
               {roles.map(role => ui(role === 2 ? 'task.sharedEmotionRoleBoss' : 'task.sharedEmotionRoleMob')).join(' · ')}
             </span>
@@ -103,16 +119,11 @@ export function SharedEmotionPanel({values, schema, queue, edits}: Props) {
               ? `${task}（${ui('task.sharedEmotionNoCalculate')}）`
               : task)).join(' · ')}</p>
           </div>
-          {SLOT_FIELDS.map(suffix => {
-            const argument = `Fleet${fleet}${suffix}`
+          {visibleFields.map(({suffix, argument, field, label, help}) => {
             const path = `General.PublicEmotion.${argument}`
-            const field = schema?.args?.General?.PublicEmotion?.[argument]
-            if (!field) return null
             const edit = edits[path]
             const value: Value = edit ? edit.value
               : values?.General?.PublicEmotion?.[argument] ?? field.value
-            const label = t(`PublicEmotion.${argument}.name`)
-            const help = t(`PublicEmotion.${argument}.help`)
             const readonly = READONLY_FIELDS.has(suffix)
             return (
               <div className="field-row" key={argument}>
@@ -136,13 +147,11 @@ export function SharedEmotionPanel({values, schema, queue, edits}: Props) {
                     label={label}
                     translateOption={option => t(`PublicEmotion.${argument}.${option}`)}
                     onChange={next => {
-                      const {payload, text, error} = prepareValue(next, field)
+                      // 心情值在后端是整数，schema 的 input 类型没有携带这个约束。
+                      const {payload, text, error} = prepareValue(next, suffix === 'Value' ? {...field, type: 'int'} : field)
                       queue.change(path, text ?? next, payload, error)
-                      // 手改心情值等于"此刻就是这个数"：记录时间一起刷新，否则后端会
-                      // 从旧记录接着推算恢复量，把用户填的值又加上一段（乃至顶到上限）。
-                      if (suffix === 'Value') {
-                        write(`General.PublicEmotion.Fleet${fleet}Record`, seedRecordTime())
-                      }
+                      // API 在 Value 通过校验并落盘时原子刷新 Record。这里另发时间
+                      // 会在数字被后端拒绝时仍改写基准，也可能覆盖更新的记账时间。
                     }}
                   />
                   <EditStatus id={path} edit={edit} retry={queue.retry} />
@@ -151,7 +160,7 @@ export function SharedEmotionPanel({values, schema, queue, edits}: Props) {
             )
           })}
         </section>
-      ))}
+      })}
     </div>
   )
 }

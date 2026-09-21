@@ -44,6 +44,41 @@ class ConfigApiTests(unittest.TestCase):
         self.configs.get('testpilot')
         self.assertEqual(before, path.stat().st_mtime_ns)
 
+    def test_read_migrates_legacy_public_emotion_without_writing(self):
+        """WebUI 读取旧实例时也要先迁移共用心情，避免首次打开覆盖旧账本。"""
+        import json
+
+        path = self.configs.path('testpilot')
+        data = json.loads(path.read_text(encoding='utf-8'))
+        public = data['General']['PublicEmotion']
+        for key in list(public):
+            if key.startswith('Fleet'):
+                public.pop(key)
+        public.update({
+            'FleetValue': 42,
+            'FleetRecord': '2026-09-19 19:50:35',
+            'FleetControl': 'prevent_green_face',
+            'FleetRecover': 'dormitory_floor_1',
+            'FleetOath': True,
+            'FleetOnsen': False,
+        })
+        path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+        before = path.read_bytes()
+
+        # API 使用自身 root 加载的 schema；不应回退到 redirect_utils 通过 cwd
+        # 查找的仓库 args.json（隔离部署的 schema 可能不同）。
+        with patch('module.config.redirect_utils.utils.template_defaults',
+                   side_effect=AssertionError('API 不应读取全局模板 schema')):
+            result = self.configs.get('testpilot')
+        migrated = result['values']['General']['PublicEmotion']
+        self.assertEqual(42, migrated['Fleet1Value'])
+        self.assertEqual('2026-09-19 19:50:35', migrated['Fleet1Record'])
+        self.assertEqual('prevent_green_face', migrated['Fleet1Control'])
+        self.assertEqual('dormitory_floor_1', migrated['Fleet1Recover'])
+        self.assertTrue(migrated['Fleet1Oath'])
+        self.assertFalse(migrated['Fleet1Onsen'])
+        self.assertEqual(before, path.read_bytes())
+
     def test_importable_lists_configs_in_import_folder(self):
         """可导入列表只来自导入目录；解不开的 JSON、符号链接、以及实例目录里的文件都不算。"""
         imports = self.configs.import_directory

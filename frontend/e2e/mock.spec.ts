@@ -761,12 +761,38 @@ test('共用心情值同步到监控任务图的心情字段', async ({page}) =>
   // display: disabled，API 直接拒写（READ_ONLY），界面上只留一条红色错误。
   await expect(shared1Record).not.toHaveValue('2020-01-01 00:00:00')
   await expect(page.locator('.edit-error')).toHaveCount(0)
+  // 搜索也应命中面板动态生成的舰队字段；这些字段不在通用 schema 列表里，
+  // 但 PublicEmotion 分组不能因此被整个过滤掉。
+  const configSearch = page.getByRole('textbox', {name: '搜索配置项'})
+  await configSearch.fill('舰队1')
+  await expect(page.locator('[id="General.PublicEmotion.Fleet1Value"]')).toBeVisible()
+  await expect(page.locator('[id="General.PublicEmotion.Fleet2Value"]')).toHaveCount(0)
+  await configSearch.fill('')
+
+  // 无效心情值只显示字段错误，不应偷偷刷新不可见的记录时间。
+  // 先等启用时的播种请求落盘，避免把旧队列里的 Record 写入误认为本次非法输入触发。
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('azurpilot.edits.config:demo-main'))).toBeNull()
+  const recordBeforeInvalid = await shared1Record.inputValue()
   const shared2 = page.locator('[id="General.PublicEmotion.Fleet2Value"]')
+  for (const [invalid, valid] of [['不是数字', '65'], ['77.5', '66']]) {
+    const patchesBeforeInvalid = methods.length
+    await shared1.fill(invalid)
+    await shared1.blur()
+    await expect(page.locator('[id="General.PublicEmotion.Fleet1Value-status"]')).toHaveClass(/edit-error/)
+    // 提交另一支舰队的有效输入，确认整个队列只剩非法草稿后再检查。
+    // 覆盖非法字符和小数，避免命中上一笔「已保存」状态。
+    await shared2.fill(valid)
+    await shared2.blur()
+    await expect.poll(() => page.evaluate(() => {
+      const pending = JSON.parse(sessionStorage.getItem('azurpilot.edits.config:demo-main') ?? '{}')
+      return Object.entries(pending).map(([path, edit]) => [path, (edit as {status: string}).status])
+    })).toEqual([['General.PublicEmotion.Fleet1Value', 'error']])
+    await expect(shared1Record).toHaveValue(recordBeforeInvalid)
+    expect(methods.slice(patchesBeforeInvalid).some(payload => payload.includes('Fleet1Record'))).toBe(false)
+  }
   const before = methods.length
   await shared1.fill('77')
   await shared1.blur()
-  await shared2.fill('66')
-  await shared2.blur()
 
   // 任务图对应的心情字段应同步为共用值（道中→Fleet1、Boss→Fleet2），
   // 且这几个字段在共用模式下只读。
@@ -774,8 +800,7 @@ test('共用心情值同步到监控任务图的心情字段', async ({page}) =>
   await expect(page.locator('[id="Main.Emotion.Fleet1Value"]')).toHaveValue('77')
   await expect(page.locator('[id="Main.Emotion.Fleet2Value"]')).toHaveValue('66')
   await expect(page.locator('[id="Main.Emotion.Fleet1Control"]')).toBeDisabled()
-  // 同步不会把编辑队列打转：开启时播种两支舰队（各 2 个字段）、两次手改（各 2 个）
-  // 加上镜像（每张图 2 个），正常在 12 次以内；超过就说明计划在打转。
+  // 同步不会把编辑队列打转；这里只统计最终有效输入及其镜像，保留上限兜底。
   expect(methods.length - before).toBeLessThan(14)
   expect(errors).toEqual([])
   // 心情设置与沉船忽略已下沉到共用面板按真实舰队配置，任务级这两项被锁住。

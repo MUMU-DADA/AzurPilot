@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Schema, Values } from '../api/types'
 import {
   SLOT_FIELDS,
+  fleetRoleSetsOf,
   fleetRolesOf,
   fleetUsageOf,
   isSeeded,
@@ -63,6 +64,11 @@ describe('fleetRolesOf', () => {
     expect(use.roles).toEqual({5: 1})
   })
 
+  it('同一编号双队分工保留两个职能，供共用账本取值与镜像', () => {
+    expect(fleetRoleSetsOf(values({}, {Main: fleetTask(5, 5, 'fleet1_mob_fleet2_boss')}), undefined, 'Main'))
+      .toEqual({5: [1, 2]})
+  })
+
   it('配置里没有时回落到 schema 默认值', () => {
     const use = fleetRolesOf(values({}, {Main: {}}), schema({
       Main: {Fleet: {
@@ -93,9 +99,22 @@ describe('fleetRolesOf', () => {
     const use = fleetRolesOf(values({}, {Main: fleetTask(0, 0, 'fleet1_mob_fleet2_boss')}), undefined, 'Main')
     expect(use.roles).toEqual({})
   })
+
+  it('未知任务不会按默认值凭空占用 Fleet1', () => {
+    expect(fleetRolesOf(values({}, {}), undefined, 'TypoTask').roles).toEqual({})
+  })
 })
 
 describe('fleetUsageOf', () => {
+  it('反转顺序只改变展示职能，不改变心情账本槽位', () => {
+    const config = values({}, {Main: fleetTask(4, 3, 'fleet1_boss_fleet2_mob')})
+    expect(fleetUsageOf(config, undefined, ['Main'])).toEqual([
+      {fleet: 3, tasks: ['Main'], roles: [1]},
+      {fleet: 4, tasks: ['Main'], roles: [2]},
+    ])
+    expect(fleetRoleSetsOf(config, undefined, 'Main')).toEqual({4: [1], 3: [2]})
+  })
+
   it('按真实舰队号聚合，并记录职能', () => {
     const config = values({}, {Main: fleetTask(4, 3, 'fleet1_mob_fleet2_boss')})
     expect(fleetUsageOf(config, undefined, ['Main'])).toEqual([
@@ -157,6 +176,11 @@ describe('parseParticipatingTasks', () => {
   it('按半角逗号拆分并去掉空白', () => {
     expect(parseParticipatingTasks(values({Tasks: 'Main2, Event , EventA'})))
       .toEqual(['Main2', 'Event', 'EventA'])
+  })
+
+  it('重复任务只保留一份，避免面板与签名重复', () => {
+    expect(parseParticipatingTasks(values({Tasks: 'Main, Main, Event, Main'})))
+      .toEqual(['Main', 'Event'])
   })
 
   it('空值得到空名单', () => {
@@ -236,6 +260,13 @@ describe('minimumMoraleOf', () => {
       EventA: moraleTask(1, 0, 'fleet1_all_fleet2_standby', 130),
     })
     expect(minimumMoraleOf(config, undefined, ['Main2', 'Event', 'EventA'])).toEqual({1: 130})
+  })
+
+  it('同一真实舰队占两个任务槽位时，两个槽位的较低心情生效', () => {
+    const config = values({}, {
+      Main: moraleTask(5, 5, 'fleet1_mob_fleet2_boss', 100, 40),
+    })
+    expect(minimumMoraleOf(config, undefined, ['Main'])).toEqual({5: 40})
   })
 
   it('按职能换算：二队打道中时读的是该任务的 Fleet2Value', () => {
@@ -398,6 +429,15 @@ describe('初始接管：监控清单第一次设置时的播种', () => {
     const args = schema({General: {PublicEmotion: {Fleet1Value: {value: 119}}}})
     const {writes} = planEmotionWrites(config, args, ['Main'], {signature: '', emitted: ''})
     expect([...writes]).toEqual([['General.PublicEmotion.Fleet1Value', 100]])
+  })
+
+  it('校验失败的数字草稿不镜像到其他任务账本', () => {
+    const config = values({Fleet1Value: 100, Fleet1Record: '2026-09-21 04:07:00'}, {
+      Main: moraleTask(1, 0, 'fleet1_all_fleet2_standby', 100),
+    })
+    const edits = {'General.PublicEmotion.Fleet1Value': {value: '1.5', error: '请输入整数'}}
+    const {writes} = planEmotionWrites(config, undefined, ['Main'], {signature: '', emitted: ''}, edits)
+    expect([...writes]).toEqual([])
   })
 
   it('任务心情与现值相同时不重复播种', () => {
@@ -567,6 +607,20 @@ describe('moraleMirrorOf', () => {
     expect([...moraleMirrorOf(config, undefined, ['Main'])]).toEqual([
       ['Main.Emotion.Fleet1Value', 100],
       ['Main.Emotion.Fleet2Value', 88],
+    ])
+  })
+
+  it('同一真实舰队双队分工时同时镜像两个任务槽位', () => {
+    const config = mirrorValues(
+      {Fleet5Value: 40, Fleet5Record: '2026-09-21 00:07:21'},
+      {
+        Fleet: {Fleet1: 5, Fleet2: 5, FleetOrder: 'fleet1_mob_fleet2_boss'},
+        Emotion: {Fleet1Value: 100, Fleet2Value: 90},
+      },
+    )
+    expect([...moraleMirrorOf(config, undefined, ['Main'])]).toEqual([
+      ['Main.Emotion.Fleet1Value', 40],
+      ['Main.Emotion.Fleet2Value', 40],
     ])
   })
 

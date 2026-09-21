@@ -13,6 +13,7 @@ import yaml
 from deploy.atomic import atomic_write
 from module.api.protocol import ApiError
 from module.config.transaction import config_transaction
+from module.config.redirect_utils.utils import public_emotion_to_real_fleets_redirect
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = 'template'
@@ -146,6 +147,10 @@ class ConfigService:
                 for group, fields in groups.items():
                     if isinstance(fields, dict):
                         merged.setdefault(task, {}).setdefault(group, {}).update(fields)
+        # API 读取也要应用共用心情的旧单槽位迁移。运行器通常会经过
+        # ConfigUpdater，但 WebUI 直接走 ConfigService；若这里不迁移，旧配置会
+        # 看见模板默认的 Fleet1Value/Record，首次打开面板就会把已有账本覆盖掉。
+        merged = public_emotion_to_real_fleets_redirect(merged, data, defaults=self.args)
         return merged, hashlib.sha256(raw).hexdigest()
 
     def schema(self, language='zh-CN'):

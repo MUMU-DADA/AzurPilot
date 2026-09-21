@@ -338,6 +338,13 @@ class Emotion:
         self.fleet_1 = FleetEmotion(self.config, fleet=1)
         self.fleet_2 = FleetEmotion(self.config, fleet=2)
         self.roles = {}
+        # 逻辑职能（道中 / Boss）到真实舰队追踪器的映射。通常一对一；
+        # 但配置允许把同一支真实舰队填进 Fleet1 与 Fleet2，此时两个职能
+        # 必须指向同一个账本，不能因为 roles 字典去重而漏扣 Boss 那一场。
+        self.role_fleets = {}
+        # 真实舰队到逻辑职能的反向映射，record() 镜像时需要覆盖重复占位的
+        # 两个任务槽位（Emotion.Fleet1* 与 Emotion.Fleet2*）。
+        self.real_roles = {}
         self.sharing = self._handle_public()
         if self.sharing:
             self.fleets = list(self.sharing.values())
@@ -383,6 +390,27 @@ class Emotion:
             for number in numbers
         }
         self.roles = numbers
+        self.role_fleets = {
+            role: sharing[number]
+            for number, role in numbers.items()
+        }
+        self.real_roles = {
+            number: {role}
+            for number, role in numbers.items()
+        }
+        # real_fleets_of() 对重复编号会收敛为一个真实舰队，保留它的第一个
+        # 职能以兼容既有映射 API。运行时仍要把另一个职能绑定到同一追踪器。
+        if (
+            self.config.Fleet_Fleet1
+            and self.config.Fleet_Fleet1 == self.config.Fleet_Fleet2
+            and self.config.Fleet_FleetOrder in {
+                'fleet1_mob_fleet2_boss', 'fleet1_boss_fleet2_mob'
+            }
+            and self.config.Fleet_Fleet1 in sharing
+        ):
+            shared = sharing[self.config.Fleet_Fleet1]
+            self.role_fleets = {1: shared, 2: shared}
+            self.real_roles[self.config.Fleet_Fleet1] = {1, 2}
         logger.info(f'[情绪-共用] 本任务使用真实舰队 {numbers}')
         return sharing
 
@@ -397,10 +425,7 @@ class Emotion:
         """
         if self.sharing:
             wanted = 1 if fleet_index == 1 else 2
-            for number, role in self.roles.items():
-                if role == wanted:
-                    return self.sharing[number]
-            return None
+            return self.role_fleets.get(wanted)
         return self.fleets[fleet_index - 1]
 
     @property
@@ -460,8 +485,7 @@ class Emotion:
                 setattr(self.config, fleet.value_name, new_value)
                 setattr(self.config, fleet.value_name.replace('Value', 'Record'), record_time)
                 if self.sharing:
-                    role = self.roles.get(fleet.number)
-                    if role:
+                    for role in self.real_roles.get(fleet.number, ()):
                         slot = self.fleet_1 if role == 1 else self.fleet_2
                         setattr(self.config, slot.value_name, new_value)
                         setattr(self.config, slot.value_name.replace('Value', 'Record'), record_time)
@@ -544,9 +568,10 @@ class Emotion:
         if self.sharing:
             # 真实舰队号 -> 该舰队本次要扣的总量。
             expects = {}
-            for number, role in self.roles.items():
-                if role in share:
-                    expects[number] = expects.get(number, 0) + share[role]
+            for role, amount in share.items():
+                fleet = self.role_fleets.get(role)
+                if fleet is not None:
+                    expects[fleet.number] = expects.get(fleet.number, 0) + amount
             recovered = max(
                 fleet.get_recovered(expects.get(number, 0))
                 for number, fleet in self.sharing.items()
@@ -668,6 +693,14 @@ class Emotion:
                 setattr(self.config, fleet.value_name, 0)
                 setattr(self.config, fleet.value_name.replace('Value', 'Record'),
                         record_time)
+                if self.sharing:
+                    # 与 record() 一样同步任务槽位，避免共用模式保底清零后
+                    # 关闭共用心情又从旧的任务账本继续出击。
+                    for role in self.real_roles.get(fleet.number, ()):
+                        slot = self.fleet_1 if role == 1 else self.fleet_2
+                        setattr(self.config, slot.value_name, 0)
+                        setattr(self.config, slot.value_name.replace('Value', 'Record'),
+                                record_time)
         logger.info('[心情-保底] 已将所有舰队心情清零')
 
     @cached_property

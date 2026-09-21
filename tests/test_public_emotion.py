@@ -219,6 +219,40 @@ class MappingTests(unittest.TestCase):
         self.assertEqual(5, emotion._select(1).number)
         self.assertIsNone(emotion._select(2))
 
+    def test_same_real_fleet_serves_both_roles(self):
+        """同一支真实舰队占两个出击位时，两个逻辑位都落到同一账本。"""
+        config = base_config().set_fleet(5, 5, 'fleet1_mob_fleet2_boss')
+        emotion = Emotion(config)
+        self.assertEqual({5: 1}, emotion.roles)
+        self.assertIs(emotion._select(1), emotion._select(2))
+
+    def test_same_real_fleet_counts_both_roles_and_mirrors_both_slots(self):
+        """双队分工但编号重复：道中与 Boss 战斗都要扣同一支，两个任务槽位都同步。"""
+        config = base_config().set_fleet(5, 5, 'fleet1_mob_fleet2_boss')
+        config.set_morale(5, 119)
+        config.set_task_morale('1', 99).set_task_morale('2', 88)
+        emotion = Emotion(config)
+        recovered, delay = emotion._check_reduce(9)
+        self.assertFalse(delay)
+        self.assertLessEqual(recovered, current_time())
+        # 8 道中 + 1 Boss = 9 场 × 2 点，共扣 18。
+        emotion.reduce(fleet_index=1)
+        emotion.reduce(fleet_index=2)
+        self.assertEqual(115, config.PublicEmotion_Fleet5Value)
+        emotion.record()
+        self.assertEqual(115, config.Emotion_Fleet1Value)
+        self.assertEqual(115, config.Emotion_Fleet2Value)
+
+    def test_same_real_fleet_precheck_sums_both_role_costs(self):
+        """预检必须汇总重复舰队的道中与 Boss 扣减，而不是只检查一个职能。"""
+        config = base_config().set_fleet(5, 5, 'fleet1_mob_fleet2_boss')
+        # 9 战斗的总扣减为 18；只检查道中位时扣减为 16，刚好不会触发延迟。
+        with Clock(datetime(2026, 9, 21, 10)) as clock:
+            config.set_morale(5, 47, record=clock.now)
+            recovered, delay = Emotion(config)._check_reduce(9)
+            self.assertEqual(clock.now + timedelta(seconds=72), recovered)
+        self.assertTrue(delay)
+
 
 class ShareBattleTests(unittest.TestCase):
     """_share_battles 把战斗次数拆到逻辑职能上。"""
@@ -570,12 +604,61 @@ class LegacySlotRedirectTests(unittest.TestCase):
         self.assertEqual(100, deep_get(out, f'{self.BASE}.Fleet1Value'))
         self.assertEqual('2026-09-21 00:35:06', deep_get(out, f'{self.BASE}.Fleet1Record'))
 
+    def test_record_prevents_legacy_value_overwrite_even_when_value_is_default(self):
+        """账本值恰好等于默认值时，已存在的 Record 仍标记迁移完成。"""
+        recorded = datetime(2026, 9, 21, 0, 35, 6)
+        new = self.build(Fleet1Record=recorded)
+        out = public_emotion_to_real_fleets_redirect(new, self.legacy(FleetValue=0))
+        self.assertEqual(self.default('Fleet1Value'), deep_get(out, f'{self.BASE}.Fleet1Value'))
+        self.assertEqual(recorded, deep_get(out, f'{self.BASE}.Fleet1Record'))
+
     def test_migrates_only_fields_still_at_default(self):
         """逐字段判断：已记账的保留，还没动过的照迁。"""
         new = self.build(Fleet1Value=100)
         out = public_emotion_to_real_fleets_redirect(new, self.legacy(FleetOnsen=True))
         self.assertEqual(100, deep_get(out, f'{self.BASE}.Fleet1Value'))
         self.assertIs(True, deep_get(out, f'{self.BASE}.Fleet1Onsen'))
+
+    def test_migrates_legacy_record_when_new_value_is_datetime(self):
+        """更新器先把目标日期解析成 datetime 时，仍应识别为模板默认并迁移。"""
+        new = self.build(Fleet1Value=100, Fleet1Record=datetime(2020, 1, 1))
+        out = public_emotion_to_real_fleets_redirect(new, self.legacy())
+        self.assertEqual(100, deep_get(out, f'{self.BASE}.Fleet1Value'))
+        self.assertEqual(datetime.fromisoformat('2026-09-19 19:50:35'),
+                         deep_get(out, f'{self.BASE}.Fleet1Record'))
+
+    def test_config_updater_migrates_legacy_record_end_to_end(self):
+        """走完整 ConfigUpdater 流程，旧 Record 不能因类型转换而丢失。"""
+        from module.config.config_updater import ConfigUpdater
+
+        old = {'General': {'PublicEmotion': {
+            'FleetValue': 0,
+            'FleetRecord': '2026-09-19 19:50:35',
+        }}}
+        updated = ConfigUpdater().config_update(old)
+        self.assertEqual(0, updated['General']['PublicEmotion']['Fleet1Value'])
+        self.assertEqual(
+            datetime.fromisoformat('2026-09-19 19:50:35'),
+            updated['General']['PublicEmotion']['Fleet1Record'],
+        )
+
+    def test_migrated_record_is_usable_by_emotion_update(self):
+        """迁移结果可直接供 FleetEmotion.update 使用，不会留下字符串时间。"""
+        from module.config.config_updater import ConfigUpdater
+
+        migrated = ConfigUpdater().config_update({
+            'General': {'PublicEmotion': {
+                'FleetValue': 0,
+                'FleetRecord': '2026-09-19 19:50:35',
+            }},
+        })
+        config = base_config()
+        config.PublicEmotion_Fleet1Value = migrated['General']['PublicEmotion']['Fleet1Value']
+        config.PublicEmotion_Fleet1Record = migrated['General']['PublicEmotion']['Fleet1Record']
+        emotion = Emotion(config)
+        with Clock(datetime(2026, 9, 19, 20, 2, 35)):
+            emotion.update()
+        self.assertEqual(10, emotion.sharing[1].current, '按迁移时间恢复 12 分钟，应恢复 10 点')
 
     def test_untouched_config_keeps_defaults(self):
         old = {'General': {'PublicEmotion': {'Enable': False}}}
@@ -783,6 +866,17 @@ class NormalModeTests(unittest.TestCase):
         self.assertEqual(0, config.Emotion_Fleet1Value)
         self.assertEqual(0, config.Emotion_Fleet2Value)
         self.assertEqual(100, config.PublicEmotion_Fleet1Value)
+
+    def test_shared_emergency_reset_mirrors_task_slots(self):
+        """共用模式保底清零后，切回普通模式不能继续使用旧任务账。"""
+        config = base_config().set_fleet(4, 3)
+        config.set_morale(4, 100).set_morale(3, 90)
+        config.set_task_morale('1', 100).set_task_morale('2', 90)
+        Emotion(config).emergency_reset()
+        self.assertEqual(0, config.PublicEmotion_Fleet4Value)
+        self.assertEqual(0, config.PublicEmotion_Fleet3Value)
+        self.assertEqual(0, config.Emotion_Fleet1Value)
+        self.assertEqual(0, config.Emotion_Fleet2Value)
 
     # ---- 下面这些是共用模式已经逐条测过的场景，普通模式照着对齐一遍 ----
 

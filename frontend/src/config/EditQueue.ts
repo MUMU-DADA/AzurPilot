@@ -153,7 +153,14 @@ export class EditQueue {
 
   flush(): Promise<void> {
     if (this.running) return this.running
-    this.running = this.drain().finally(() => { this.running = undefined })
+    this.running = this.drain().finally(() => {
+      this.running = undefined
+      // 回执引发的 effect 可能在 drain 结束与 finally 之间加入字段；当时
+      // change() 看到旧的 running，无法启动下一轮。清锁后继续排空，避免草稿滞留。
+      if (this.transport.ready() && Object.values(this.state.edits).some(edit => edit.status === 'queued')) {
+        return this.flush()
+      }
+    })
     return this.running
   }
 
