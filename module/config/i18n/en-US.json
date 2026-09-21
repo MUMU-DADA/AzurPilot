@@ -1062,46 +1062,249 @@
   "PublicEmotion": {
     "_info": {
       "name": "Shared morale",
-      "help": "Can use the same team to complete multiple tasks\nWhen using this function, please ensure that the fleet function of the corresponding task is to clear all single teams, and the team is a shared team."
+      "help": "Track morale per actual fleet when several tasks reuse the same fleets\nEach task declares which actual fleet its mob fleet is in the \"Actual fleets\" section below; tasks sharing an actual fleet share its morale"
     },
     "Enable": {
       "name": "Enable shared morale",
-      "help": "After enabling, the shared morale will be used, and the following morale configuration will replace the original configuration."
+      "help": "Track morale per actual fleet; the morale settings below replace the fleet morale settings on each task page"
     },
     "Tasks": {
       "name": "Shared morale tasks",
       "help": "Select tasks that use shared morale, separated by half-width commas, such as \"Main, Event, EventA\"\nMain Campaign-1: Main, Main Campaign-2: Main2, Main Campaign-3: Main3\nEvent Map-1: Event, Event Map-2: Event2, War Archives: WarArchives\nDaily Map A: EventA, Daily Map B: EventB, Daily Map C: EventC, Daily Map D: EventD, Daily Map SP: EventSp"
     },
-    "FleetValue": {
-      "name": "Morale value",
+    "Fleet1Value": {
+      "name": "Fleet 1 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet1Record": {
+      "name": "Fleet 1 morale record time",
       "help": ""
     },
-    "FleetRecord": {
-      "name": "Morale record time",
-      "help": ""
-    },
-    "FleetControl": {
-      "name": "Morale control",
+    "Fleet1Control": {
+      "name": "Fleet 1 morale control",
       "help": "",
-      "keep_exp_bonus": "Maintain experience bonus (>120)",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
       "prevent_green_face": "Prevent green face (>40)",
       "prevent_yellow_face": "Prevent yellow face (>30)",
       "prevent_red_face": "Prevent red face (>0)"
     },
-    "FleetRecover": {
-      "name": "Morale recovery",
+    "Fleet1Recover": {
+      "name": "Fleet 1 morale recovery",
       "help": "",
       "not_in_dormitory": "Not in dorm (20/h)",
       "dormitory_floor_1": "Dorm 1st floor (40/h)",
       "dormitory_floor_2": "Dorm 2nd floor (50/h)"
     },
-    "FleetOath": {
-      "name": "All members are married (+10/h)",
+    "Fleet1Oath": {
+      "name": "All Fleet 1 members are married (+10/h)",
       "help": ""
     },
-    "FleetOnsen": {
-      "name": "All members have placed hot springs (+10/h)",
+    "Fleet1Onsen": {
+      "name": "All Fleet 1 members are in the onsen (+10/h)",
       "help": ""
+    },
+    "Fleet1IgnoreWarning": {
+      "name": "Fleet 1 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet1IgnoreShipwreck": {
+      "name": "Fleet 1 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
+    },
+    "Fleet2Value": {
+      "name": "Fleet 2 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet2Record": {
+      "name": "Fleet 2 morale record time",
+      "help": ""
+    },
+    "Fleet2Control": {
+      "name": "Fleet 2 morale control",
+      "help": "",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
+    },
+    "Fleet2Recover": {
+      "name": "Fleet 2 morale recovery",
+      "help": "",
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
+    },
+    "Fleet2Oath": {
+      "name": "All Fleet 2 members are married (+10/h)",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "All Fleet 2 members are in the onsen (+10/h)",
+      "help": ""
+    },
+    "Fleet2IgnoreWarning": {
+      "name": "Fleet 2 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet2IgnoreShipwreck": {
+      "name": "Fleet 2 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
+    },
+    "Fleet3Value": {
+      "name": "Fleet 3 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet3Record": {
+      "name": "Fleet 3 morale record time",
+      "help": "Updated automatically on every record, no need to edit"
+    },
+    "Fleet3Control": {
+      "name": "Fleet 3 morale control",
+      "help": "",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
+    },
+    "Fleet3Recover": {
+      "name": "Fleet 3 morale recovery",
+      "help": "",
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
+    },
+    "Fleet3Oath": {
+      "name": "All Fleet 3 members are married (+10/h)",
+      "help": ""
+    },
+    "Fleet3Onsen": {
+      "name": "All Fleet 3 members are in the onsen (+10/h)",
+      "help": ""
+    },
+    "Fleet3IgnoreWarning": {
+      "name": "Fleet 3 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet3IgnoreShipwreck": {
+      "name": "Fleet 3 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
+    },
+    "Fleet4Value": {
+      "name": "Fleet 4 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet4Record": {
+      "name": "Fleet 4 morale record time",
+      "help": "Updated automatically on every record, no need to edit"
+    },
+    "Fleet4Control": {
+      "name": "Fleet 4 morale control",
+      "help": "",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
+    },
+    "Fleet4Recover": {
+      "name": "Fleet 4 morale recovery",
+      "help": "",
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
+    },
+    "Fleet4Oath": {
+      "name": "All Fleet 4 members are married (+10/h)",
+      "help": ""
+    },
+    "Fleet4Onsen": {
+      "name": "All Fleet 4 members are in the onsen (+10/h)",
+      "help": ""
+    },
+    "Fleet4IgnoreWarning": {
+      "name": "Fleet 4 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet4IgnoreShipwreck": {
+      "name": "Fleet 4 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
+    },
+    "Fleet5Value": {
+      "name": "Fleet 5 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet5Record": {
+      "name": "Fleet 5 morale record time",
+      "help": "Updated automatically on every record, no need to edit"
+    },
+    "Fleet5Control": {
+      "name": "Fleet 5 morale control",
+      "help": "",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
+    },
+    "Fleet5Recover": {
+      "name": "Fleet 5 morale recovery",
+      "help": "",
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
+    },
+    "Fleet5Oath": {
+      "name": "All Fleet 5 members are married (+10/h)",
+      "help": ""
+    },
+    "Fleet5Onsen": {
+      "name": "All Fleet 5 members are in the onsen (+10/h)",
+      "help": ""
+    },
+    "Fleet5IgnoreWarning": {
+      "name": "Fleet 5 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet5IgnoreShipwreck": {
+      "name": "Fleet 5 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
+    },
+    "Fleet6Value": {
+      "name": "Fleet 6 morale value",
+      "help": "Derived automatically from elapsed time, no need to edit"
+    },
+    "Fleet6Record": {
+      "name": "Fleet 6 morale record time",
+      "help": "Updated automatically on every record, no need to edit"
+    },
+    "Fleet6Control": {
+      "name": "Fleet 6 morale control",
+      "help": "",
+      "keep_exp_bonus": "Keep EXP bonus (>120)",
+      "prevent_green_face": "Prevent green face (>40)",
+      "prevent_yellow_face": "Prevent yellow face (>30)",
+      "prevent_red_face": "Prevent red face (>0)"
+    },
+    "Fleet6Recover": {
+      "name": "Fleet 6 morale recovery",
+      "help": "",
+      "not_in_dormitory": "Not in dorm (20/h)",
+      "dormitory_floor_1": "Dorm 1st floor (40/h)",
+      "dormitory_floor_2": "Dorm 2nd floor (50/h)"
+    },
+    "Fleet6Oath": {
+      "name": "All Fleet 6 members are married (+10/h)",
+      "help": ""
+    },
+    "Fleet6Onsen": {
+      "name": "All Fleet 6 members are in the onsen (+10/h)",
+      "help": ""
+    },
+    "Fleet6IgnoreWarning": {
+      "name": "Fleet 6 ignore red-face warning",
+      "help": "Keep sortieing with this fleet even when the low-morale popup appears, instead of exiting the stage and resetting its morale"
+    },
+    "Fleet6IgnoreShipwreck": {
+      "name": "Fleet 6 ignore shipwreck penalty",
+      "help": "Do not count the extra 10 points of morale lost when this fleet is sunk"
     }
   },
   "YukikazeTaskManager": {

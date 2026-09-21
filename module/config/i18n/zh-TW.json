@@ -1062,46 +1062,249 @@
   "PublicEmotion": {
     "_info": {
       "name": "共用心情",
-      "help": "可使用同一隊伍完成多項任務\n使用該功能時請確保相應任務的艦隊職能為單隊全清，且隊伍為共用隊伍"
+      "help": "多支任務重複使用同一支艦隊時，依實際艦隊分別計算心情\n每個任務在下方「實際艦隊」裡宣告自己的道中隊對應哪一支艦隊，同一個實際艦隊被多個任務重複使用時共用同一份心情"
     },
     "Enable": {
       "name": "啟用共用心情功能",
-      "help": "啟用後將使用共用心情，以下心情設定將代替原設定"
+      "help": "啟用後依實際艦隊計算心情，下方各實際艦隊的心情設定將代替任務圖設定裡的艦隊心情設定"
     },
     "Tasks": {
       "name": "共用心情任務",
       "help": "選擇使用共用心情的任務，用半形逗號隔開，如\"Main, Event, EventA\"\n主線圖-1: Main, 主線圖-2: Main2, 主線圖-3: Main3\n活動圖-1: Event, 活動圖-2: Event2, 作戰檔案: WarArchives\n每日A圖: EventA, 每日B圖: EventB, 每日C圖: EventC, 每日D圖: EventD, 每日SP圖: EventSp"
     },
-    "FleetValue": {
-      "name": "心情值",
+    "Fleet1Value": {
+      "name": "艦隊1 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet1Record": {
+      "name": "艦隊1 心情記錄時間",
       "help": ""
     },
-    "FleetRecord": {
-      "name": "心情記錄時間",
-      "help": ""
-    },
-    "FleetControl": {
-      "name": "心情控制",
+    "Fleet1Control": {
+      "name": "艦隊1 心情控制",
       "help": "",
       "keep_exp_bonus": "保持經驗加成 (>120)",
       "prevent_green_face": "防止綠臉 (>40)",
       "prevent_yellow_face": "防止黃臉 (>30)",
       "prevent_red_face": "防止紅臉 (>0)"
     },
-    "FleetRecover": {
-      "name": "心情回復",
+    "Fleet1Recover": {
+      "name": "艦隊1 心情回復",
       "help": "",
       "not_in_dormitory": "未放置於後宅 (20/h)",
       "dormitory_floor_1": "後宅一層 (40/h)",
       "dormitory_floor_2": "後宅二層 (50/h)"
     },
-    "FleetOath": {
-      "name": "全員已婚 (+10/h)",
+    "Fleet1Oath": {
+      "name": "艦隊1 全員已婚 (+10/h)",
       "help": ""
     },
-    "FleetOnsen": {
-      "name": "全員已放置溫泉 (+10/h)",
+    "Fleet1Onsen": {
+      "name": "艦隊1 全員已放置溫泉 (+10/h)",
       "help": ""
+    },
+    "Fleet1IgnoreWarning": {
+      "name": "艦隊1 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet1IgnoreShipwreck": {
+      "name": "艦隊1 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
+    },
+    "Fleet2Value": {
+      "name": "艦隊2 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet2Record": {
+      "name": "艦隊2 心情記錄時間",
+      "help": ""
+    },
+    "Fleet2Control": {
+      "name": "艦隊2 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持經驗加成 (>120)",
+      "prevent_green_face": "防止綠臉 (>40)",
+      "prevent_yellow_face": "防止黃臉 (>30)",
+      "prevent_red_face": "防止紅臉 (>0)"
+    },
+    "Fleet2Recover": {
+      "name": "艦隊2 心情回復",
+      "help": "",
+      "not_in_dormitory": "未放置於後宅 (20/h)",
+      "dormitory_floor_1": "後宅一層 (40/h)",
+      "dormitory_floor_2": "後宅二層 (50/h)"
+    },
+    "Fleet2Oath": {
+      "name": "艦隊2 全員已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "艦隊2 全員已放置溫泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet2IgnoreWarning": {
+      "name": "艦隊2 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet2IgnoreShipwreck": {
+      "name": "艦隊2 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
+    },
+    "Fleet3Value": {
+      "name": "艦隊3 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet3Record": {
+      "name": "艦隊3 心情記錄時間",
+      "help": "由程式在每次記帳時自動更新，無需手動修改"
+    },
+    "Fleet3Control": {
+      "name": "艦隊3 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持經驗加成 (>120)",
+      "prevent_green_face": "防止綠臉 (>40)",
+      "prevent_yellow_face": "防止黃臉 (>30)",
+      "prevent_red_face": "防止紅臉 (>0)"
+    },
+    "Fleet3Recover": {
+      "name": "艦隊3 心情回復",
+      "help": "",
+      "not_in_dormitory": "未放置於後宅 (20/h)",
+      "dormitory_floor_1": "後宅一層 (40/h)",
+      "dormitory_floor_2": "後宅二層 (50/h)"
+    },
+    "Fleet3Oath": {
+      "name": "艦隊3 全員已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet3Onsen": {
+      "name": "艦隊3 全員已放置溫泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet3IgnoreWarning": {
+      "name": "艦隊3 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet3IgnoreShipwreck": {
+      "name": "艦隊3 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
+    },
+    "Fleet4Value": {
+      "name": "艦隊4 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet4Record": {
+      "name": "艦隊4 心情記錄時間",
+      "help": "由程式在每次記帳時自動更新，無需手動修改"
+    },
+    "Fleet4Control": {
+      "name": "艦隊4 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持經驗加成 (>120)",
+      "prevent_green_face": "防止綠臉 (>40)",
+      "prevent_yellow_face": "防止黃臉 (>30)",
+      "prevent_red_face": "防止紅臉 (>0)"
+    },
+    "Fleet4Recover": {
+      "name": "艦隊4 心情回復",
+      "help": "",
+      "not_in_dormitory": "未放置於後宅 (20/h)",
+      "dormitory_floor_1": "後宅一層 (40/h)",
+      "dormitory_floor_2": "後宅二層 (50/h)"
+    },
+    "Fleet4Oath": {
+      "name": "艦隊4 全員已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet4Onsen": {
+      "name": "艦隊4 全員已放置溫泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet4IgnoreWarning": {
+      "name": "艦隊4 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet4IgnoreShipwreck": {
+      "name": "艦隊4 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
+    },
+    "Fleet5Value": {
+      "name": "艦隊5 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet5Record": {
+      "name": "艦隊5 心情記錄時間",
+      "help": "由程式在每次記帳時自動更新，無需手動修改"
+    },
+    "Fleet5Control": {
+      "name": "艦隊5 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持經驗加成 (>120)",
+      "prevent_green_face": "防止綠臉 (>40)",
+      "prevent_yellow_face": "防止黃臉 (>30)",
+      "prevent_red_face": "防止紅臉 (>0)"
+    },
+    "Fleet5Recover": {
+      "name": "艦隊5 心情回復",
+      "help": "",
+      "not_in_dormitory": "未放置於後宅 (20/h)",
+      "dormitory_floor_1": "後宅一層 (40/h)",
+      "dormitory_floor_2": "後宅二層 (50/h)"
+    },
+    "Fleet5Oath": {
+      "name": "艦隊5 全員已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet5Onsen": {
+      "name": "艦隊5 全員已放置溫泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet5IgnoreWarning": {
+      "name": "艦隊5 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet5IgnoreShipwreck": {
+      "name": "艦隊5 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
+    },
+    "Fleet6Value": {
+      "name": "艦隊6 心情值",
+      "help": "由程式依時間自動推算，無需手動修改"
+    },
+    "Fleet6Record": {
+      "name": "艦隊6 心情記錄時間",
+      "help": "由程式在每次記帳時自動更新，無需手動修改"
+    },
+    "Fleet6Control": {
+      "name": "艦隊6 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持經驗加成 (>120)",
+      "prevent_green_face": "防止綠臉 (>40)",
+      "prevent_yellow_face": "防止黃臉 (>30)",
+      "prevent_red_face": "防止紅臉 (>0)"
+    },
+    "Fleet6Recover": {
+      "name": "艦隊6 心情回復",
+      "help": "",
+      "not_in_dormitory": "未放置於後宅 (20/h)",
+      "dormitory_floor_1": "後宅一層 (40/h)",
+      "dormitory_floor_2": "後宅二層 (50/h)"
+    },
+    "Fleet6Oath": {
+      "name": "艦隊6 全員已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet6Onsen": {
+      "name": "艦隊6 全員已放置溫泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet6IgnoreWarning": {
+      "name": "艦隊6 無視紅臉出擊警告",
+      "help": "開啟後該艦隊紅臉時不再中斷任務（保底撤退與心情歸零），照常繼續出擊"
+    },
+    "Fleet6IgnoreShipwreck": {
+      "name": "艦隊6 無視沉船心情懲罰",
+      "help": "開啟後該艦隊沉船帶來的額外 10 點心情扣減不再計入"
     }
   },
   "YukikazeTaskManager": {

@@ -321,11 +321,18 @@ PublicEmotion:
   Tasks:
     type: textarea
     value: null
-  FleetValue: 119
-  FleetRecord:
-    value: 2020-01-01 00:00:00
-    display: disabled
-  FleetControl:
+  # 按**真实舰队**分别记账：FleetN* 里的 N 是编队界面里的第几支舰队，
+  # 取自任务设置里「出击舰队 - 一队/二队使用第 X 支舰队」（Fleet.Fleet1/Fleet2）。
+  # 同一支真实舰队被多个任务复用时共享同一份心情；界面只展示参与任务真正用到的
+  # 那几支（由前端按任务配置推导），这里保留 6 支以覆盖全部可能的编队槽位。
+  # 更早的单槽位 FleetValue/FleetRecord/FleetControl/FleetRecover/FleetOath/FleetOnsen
+  # 已彻底废弃，只在配置重定向里读一次搬到 Fleet1*，不再声明成参数。
+  # 记录时间是后端推算恢复量的基准。播种和手改心情值都要把它一起重置，所以这里
+  # 不能标 display: disabled——标了 API 会直接拒写。界面上的只读由前端保证
+  # （共用心情面板的只读字段表）。任务级 Emotion.FleetNRecord 仍由程序自己写。
+  Fleet1Value: 119
+  Fleet1Record: 2020-01-01 00:00:00
+  Fleet1Control:
     value: prevent_yellow_face
     option:
       [
@@ -334,11 +341,103 @@ PublicEmotion:
         prevent_yellow_face,
         prevent_red_face,
       ]
-  FleetRecover:
+  Fleet1Recover:
     value: not_in_dormitory
     option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
-  FleetOath: false
-  FleetOnsen: false
+  Fleet1Oath: false
+  Fleet1Onsen: false
+  Fleet1IgnoreWarning: false
+  Fleet1IgnoreShipwreck: false
+  Fleet2Value: 119
+  Fleet2Record: 2020-01-01 00:00:00
+  Fleet2Control:
+    value: prevent_yellow_face
+    option:
+      [
+        keep_exp_bonus,
+        prevent_green_face,
+        prevent_yellow_face,
+        prevent_red_face,
+      ]
+  Fleet2Recover:
+    value: not_in_dormitory
+    option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
+  Fleet2Oath: false
+  Fleet2Onsen: false
+  Fleet2IgnoreWarning: false
+  Fleet2IgnoreShipwreck: false
+  Fleet3Value: 119
+  Fleet3Record: 2020-01-01 00:00:00
+  Fleet3Control:
+    value: prevent_yellow_face
+    option:
+      [
+        keep_exp_bonus,
+        prevent_green_face,
+        prevent_yellow_face,
+        prevent_red_face,
+      ]
+  Fleet3Recover:
+    value: not_in_dormitory
+    option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
+  Fleet3Oath: false
+  Fleet3Onsen: false
+  Fleet3IgnoreWarning: false
+  Fleet3IgnoreShipwreck: false
+  Fleet4Value: 119
+  Fleet4Record: 2020-01-01 00:00:00
+  Fleet4Control:
+    value: prevent_yellow_face
+    option:
+      [
+        keep_exp_bonus,
+        prevent_green_face,
+        prevent_yellow_face,
+        prevent_red_face,
+      ]
+  Fleet4Recover:
+    value: not_in_dormitory
+    option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
+  Fleet4Oath: false
+  Fleet4Onsen: false
+  Fleet4IgnoreWarning: false
+  Fleet4IgnoreShipwreck: false
+  Fleet5Value: 119
+  Fleet5Record: 2020-01-01 00:00:00
+  Fleet5Control:
+    value: prevent_yellow_face
+    option:
+      [
+        keep_exp_bonus,
+        prevent_green_face,
+        prevent_yellow_face,
+        prevent_red_face,
+      ]
+  Fleet5Recover:
+    value: not_in_dormitory
+    option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
+  Fleet5Oath: false
+  Fleet5Onsen: false
+  Fleet5IgnoreWarning: false
+  Fleet5IgnoreShipwreck: false
+  Fleet6Value: 119
+  Fleet6Record: 2020-01-01 00:00:00
+  Fleet6Control:
+    value: prevent_yellow_face
+    option:
+      [
+        keep_exp_bonus,
+        prevent_green_face,
+        prevent_yellow_face,
+        prevent_red_face,
+      ]
+  Fleet6Recover:
+    value: not_in_dormitory
+    option: [not_in_dormitory, dormitory_floor_1, dormitory_floor_2]
+  Fleet6Oath: false
+  Fleet6Onsen: false
+  Fleet6IgnoreWarning: false
+  Fleet6IgnoreShipwreck: false
 YukikazeTaskManager:
   TaskPriorityAdjustment:
     type: task_priority

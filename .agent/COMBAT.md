@@ -334,14 +334,13 @@ alwaysApply: true
 
 ---
 
-### 2.7 emotion.py (476 行)
+### 2.7 emotion.py (约 600 行)
 
-**导出类型**：类 `FleetEmotion`、`Emotion`
+**导出类型**：类 `FleetEmotion`、`Emotion`，函数 `next_slot`，常量 `PUBLIC_SLOTS`
 
 **导入依赖**：
 - `datetime`
 - `time.sleep`
-- `numpy`
 - `module.base.decorator.cached_property`
 - `module.base.utils.random_normal_distribution_int`
 - `module.config.config.AzurLaneConfig`
@@ -359,28 +358,42 @@ alwaysApply: true
 - `ONSEN_RECOVER`：温泉恢复
 
 **L55-210**：`FleetEmotion` 类，单舰队情绪管理：
-- 属性：`value`（当前值）、`record`（记录时间）、`recover`（恢复地点）、`control`（控制模式）、`oath`（誓约）、`onsen`（温泉）
+- 属性：`value`（当前值）、`record`（记录时间）、`recover`（恢复地点）、`control`（控制模式）、`oath`（誓约）、`onsen`（温泉）、`number`（真实舰队号，共用心情模式下由 `fleet='Public'` + `number=N` 指定）
 - `speed` 属性：计算恢复速度（考虑誓约和温泉加成）
 - `limit` 属性：获取控制限制
 - `max` 属性：获取最大值
 - `update()` 方法：根据时间差更新情绪值
-- `get_recovered()` 方法：计算恢复时间
+- `get_recovered()` 方法：计算恢复时间，`skip=True` 表示本次战斗不使用该舰队
 
-**L212-476**：`Emotion` 类，双舰队情绪管理：
-- 属性：`is_calculate`（是否计算）、`is_ignore`（是否忽略）、`using_public`（公海舰队模式）
-- `_handle_public()`（L240-255）：处理公海舰队统一情绪管理
-- `update()` 方法：更新所有舰队情绪
-- `record()` 方法：保存情绪值到配置
-- `show()` 方法：显示情绪信息
-- `reduce_per_battle` 属性：每场战斗减少值
-- `reduce_per_battle_before_entering` 属性：进入战斗前每场减少值
-- `reduce_shipwreck` 属性：沉船扣减值
-- `_check_reduce()` 方法：检查情绪减少
+**函数**：`real_fleets_of(order, fleet_1, fleet_2)` 把任务配置翻译成
+`{真实舰队号: 逻辑编号}`（1 道中、2 Boss）。单队全清只编入道中位；
+`Fleet2=0` 或两支编号相同时收敛为一支，不会重复记账。
+
+**L212-476**：`Emotion` 类，多舰队情绪管理：
+- 属性：`is_calculate`（是否计算）、`is_ignore`（是否忽略）、`sharing`（真实舰队号 → FleetEmotion，空表示普通模式）、`roles`（真实舰队号 → 逻辑编号）、`fleets`（参与本次计算的舰队列表）
+- `_handle_public()`：解析共用心情名单，用 `real_fleets_of()` 得出本次出击的真实舰队
+- `_select()` 方法：按逻辑舰队编号反查真实舰队，本次没出击的职能返回 `None`
+- `update()` / `record()` / `show()` 方法：统一遍历 `fleets`，两种模式共用同一套逻辑
+- `_share_battles()` 方法：按 `Fleet.FleetOrder` 把战斗次数拆到逻辑职能上
+- `_check_reduce()` 方法：预检情绪，共用模式按真实舰队汇总扣减（单队全清时同一支舰队承担道中与 Boss，扣减量相加）
 - `check_reduce()` 方法：战役前检查情绪
-- `wait()` 方法：等待情绪恢复
-- `reduce()` 方法：减少情绪值
-- `bug_threshold` 属性：情绪 bug 触发阈值
-- `triggered_bug()` 方法：检测情绪计算 bug
+- `wait()` / `reduce()` 方法：按逻辑舰队编号作用于对应的**真实舰队**；职能未出击时直接跳过
+- `reduce_per_battle` / `reduce_per_battle_before_entering` / `reduce_shipwreck` 属性：各类扣减值
+- `emergency_reset()` 方法：心情清零保底，共用模式只重置本任务用到的真实舰队
+- `bug_threshold` 属性、`triggered_bug()` 方法：检测客户端情绪计算 bug
+
+**共用心情（PublicEmotion）的记账模型**：
+- 配置在 `General.PublicEmotion`，对实例全局生效；`Tasks` 是参与名单
+- **按真实舰队号记账**：`FleetN*` 里的 N 是编队界面里的第几支舰队（1~6），
+  取自任务设置里「出击舰队 - 一队/二队使用第 X 支舰队」（`Fleet.Fleet1` / `Fleet.Fleet2`），
+  由 `Fleet.FleetOrder` 决定谁打道中、谁打 Boss
+- 同一支真实舰队被多个任务复用时共享同一份心情；不同任务可以用不同舰队
+- 界面只展示参与任务真正用到的舰队，没出击的编队不会出现
+- 注意区分三个「舰队号」：`FleetN*` 是真实舰队号；`fleet_current_index` 的 1/2 是
+  道中/Boss 逻辑编号；屏幕上的 1/2 是出击位。后两者都不参与记账
+- 拆分前的单槽位字段 `PublicEmotion.Fleet*` 由 `public_emotion_to_slots_redirect`
+  迁移到 `Fleet1*`（配置重定向，见 `module/config/redirect_utils/utils.py`）。
+  该重定向是"尽力而为"：旧配置无法表达它对应的是哪一支真实舰队，统按舰队1 迁移
 
 ---
 

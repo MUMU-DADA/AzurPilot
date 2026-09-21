@@ -1062,46 +1062,249 @@
   "PublicEmotion": {
     "_info": {
       "name": "共用心情呵护",
-      "help": "让同一队完成多项任务，共享心情喵。确保任务舰队职能为单队全清且队伍共用。 (=^･ω･^=)"
+      "help": "多支任务复用同一支舰队的时候，按实际舰队分别算心情喵~\n每个任务在下面的「实际舰队」里说清楚自己的道中队是哪一支喵，同一支舰队被几个任务复用就共用一份心情喵 (=^･ω･^=)"
     },
     "Enable": {
       "name": "启用共用心情功能喵",
-      "help": "开启后使用下方统一心情配置替换原配置喵~"
+      "help": "开了之后按实际舰队算心情喵，下面各支实际舰队的心情设置会顶掉任务图设置里的喵"
     },
     "Tasks": {
       "name": "共用心情任务列表",
       "help": "半角逗号分隔，如\"Main, Event, EventA\"。 主线图-1: Main, 2: Main2, 3: Main3 活动图-1: Event, 2: Event2, 作战档案: WarArchives 每日A: EventA, B: EventB, C: EventC, D: EventD, SP: EventSp"
     },
-    "FleetValue": {
-      "name": "心情数值",
+    "Fleet1Value": {
+      "name": "舰队1 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet1Record": {
+      "name": "舰队1 心情记录时刻",
       "help": ""
     },
-    "FleetRecord": {
-      "name": "心情记录时刻",
-      "help": ""
-    },
-    "FleetControl": {
-      "name": "心情控制喵",
+    "Fleet1Control": {
+      "name": "舰队1 心情控制喵",
       "help": "",
       "keep_exp_bonus": "保持经验加成 (>120) 喵",
       "prevent_green_face": "防止绿脸 (>40) 喵",
       "prevent_yellow_face": "防止黄脸 (>30) 喵",
       "prevent_red_face": "防止红脸 (>0) 喵"
     },
-    "FleetRecover": {
-      "name": "心情回复便利",
+    "Fleet1Recover": {
+      "name": "舰队1 心情回复便利",
       "help": "",
       "not_in_dormitory": "未放置于后宅 (20/h) 喵",
       "dormitory_floor_1": "后宅一层 (40/h) 喵",
       "dormitory_floor_2": "后宅二层 (50/h) 喵"
     },
-    "FleetOath": {
-      "name": "全员已婚加成 (+10/h) 喵",
+    "Fleet1Oath": {
+      "name": "舰队1 全员已婚加成 (+10/h) 喵",
       "help": ""
     },
-    "FleetOnsen": {
-      "name": "全员温泉加成 (+10/h) 喵",
+    "Fleet1Onsen": {
+      "name": "舰队1 全员温泉加成 (+10/h) 喵",
       "help": ""
+    },
+    "Fleet1IgnoreWarning": {
+      "name": "舰队1 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet1IgnoreShipwreck": {
+      "name": "舰队1 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
+    },
+    "Fleet2Value": {
+      "name": "舰队2 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet2Record": {
+      "name": "舰队2 心情记录时刻",
+      "help": ""
+    },
+    "Fleet2Control": {
+      "name": "舰队2 心情控制喵",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120) 喵",
+      "prevent_green_face": "防止绿脸 (>40) 喵",
+      "prevent_yellow_face": "防止黄脸 (>30) 喵",
+      "prevent_red_face": "防止红脸 (>0) 喵"
+    },
+    "Fleet2Recover": {
+      "name": "舰队2 心情回复便利",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h) 喵",
+      "dormitory_floor_1": "后宅一层 (40/h) 喵",
+      "dormitory_floor_2": "后宅二层 (50/h) 喵"
+    },
+    "Fleet2Oath": {
+      "name": "舰队2 全员已婚加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "舰队2 全员温泉加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet2IgnoreWarning": {
+      "name": "舰队2 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet2IgnoreShipwreck": {
+      "name": "舰队2 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
+    },
+    "Fleet3Value": {
+      "name": "舰队3 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet3Record": {
+      "name": "舰队3 心情记录时刻",
+      "help": "程序每次记账都会自己更新喵，不用手动改喵"
+    },
+    "Fleet3Control": {
+      "name": "舰队3 心情控制喵",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120) 喵",
+      "prevent_green_face": "防止绿脸 (>40) 喵",
+      "prevent_yellow_face": "防止黄脸 (>30) 喵",
+      "prevent_red_face": "防止红脸 (>0) 喵"
+    },
+    "Fleet3Recover": {
+      "name": "舰队3 心情回复便利",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h) 喵",
+      "dormitory_floor_1": "后宅一层 (40/h) 喵",
+      "dormitory_floor_2": "后宅二层 (50/h) 喵"
+    },
+    "Fleet3Oath": {
+      "name": "舰队3 全员已婚加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet3Onsen": {
+      "name": "舰队3 全员温泉加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet3IgnoreWarning": {
+      "name": "舰队3 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet3IgnoreShipwreck": {
+      "name": "舰队3 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
+    },
+    "Fleet4Value": {
+      "name": "舰队4 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet4Record": {
+      "name": "舰队4 心情记录时刻",
+      "help": "程序每次记账都会自己更新喵，不用手动改喵"
+    },
+    "Fleet4Control": {
+      "name": "舰队4 心情控制喵",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120) 喵",
+      "prevent_green_face": "防止绿脸 (>40) 喵",
+      "prevent_yellow_face": "防止黄脸 (>30) 喵",
+      "prevent_red_face": "防止红脸 (>0) 喵"
+    },
+    "Fleet4Recover": {
+      "name": "舰队4 心情回复便利",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h) 喵",
+      "dormitory_floor_1": "后宅一层 (40/h) 喵",
+      "dormitory_floor_2": "后宅二层 (50/h) 喵"
+    },
+    "Fleet4Oath": {
+      "name": "舰队4 全员已婚加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet4Onsen": {
+      "name": "舰队4 全员温泉加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet4IgnoreWarning": {
+      "name": "舰队4 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet4IgnoreShipwreck": {
+      "name": "舰队4 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
+    },
+    "Fleet5Value": {
+      "name": "舰队5 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet5Record": {
+      "name": "舰队5 心情记录时刻",
+      "help": "程序每次记账都会自己更新喵，不用手动改喵"
+    },
+    "Fleet5Control": {
+      "name": "舰队5 心情控制喵",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120) 喵",
+      "prevent_green_face": "防止绿脸 (>40) 喵",
+      "prevent_yellow_face": "防止黄脸 (>30) 喵",
+      "prevent_red_face": "防止红脸 (>0) 喵"
+    },
+    "Fleet5Recover": {
+      "name": "舰队5 心情回复便利",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h) 喵",
+      "dormitory_floor_1": "后宅一层 (40/h) 喵",
+      "dormitory_floor_2": "后宅二层 (50/h) 喵"
+    },
+    "Fleet5Oath": {
+      "name": "舰队5 全员已婚加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet5Onsen": {
+      "name": "舰队5 全员温泉加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet5IgnoreWarning": {
+      "name": "舰队5 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet5IgnoreShipwreck": {
+      "name": "舰队5 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
+    },
+    "Fleet6Value": {
+      "name": "舰队6 心情数值",
+      "help": "程序会按时间自己推算喵，不用手动改喵"
+    },
+    "Fleet6Record": {
+      "name": "舰队6 心情记录时刻",
+      "help": "程序每次记账都会自己更新喵，不用手动改喵"
+    },
+    "Fleet6Control": {
+      "name": "舰队6 心情控制喵",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120) 喵",
+      "prevent_green_face": "防止绿脸 (>40) 喵",
+      "prevent_yellow_face": "防止黄脸 (>30) 喵",
+      "prevent_red_face": "防止红脸 (>0) 喵"
+    },
+    "Fleet6Recover": {
+      "name": "舰队6 心情回复便利",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h) 喵",
+      "dormitory_floor_1": "后宅一层 (40/h) 喵",
+      "dormitory_floor_2": "后宅二层 (50/h) 喵"
+    },
+    "Fleet6Oath": {
+      "name": "舰队6 全员已婚加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet6Onsen": {
+      "name": "舰队6 全员温泉加成 (+10/h) 喵",
+      "help": ""
+    },
+    "Fleet6IgnoreWarning": {
+      "name": "舰队6 无视红脸出击警告喵",
+      "help": "开了之后这支队红脸也不打断任务喵（不撤退不清零），让它接着打喵"
+    },
+    "Fleet6IgnoreShipwreck": {
+      "name": "舰队6 无视沉船心情惩罚喵",
+      "help": "开了之后这支队沉船多扣的 10 点就不算进心情了喵"
     }
   },
   "YukikazeTaskManager": {

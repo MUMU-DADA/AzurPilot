@@ -696,6 +696,14 @@ class ConfigUpdater:
          'OpsiHazard1Leveling.ExecuteFixedPatrolScan',
          execute_fixed_patrol_scan_redirect),
     ]
+    # 共用心情的单槽位配置 → 按实际舰队拆分的槽位配置。新字段由生成器写入模板，
+    # 因此必须在读取阶段迁移：等到运行时再判断，`bound` 里已经有模板默认值，
+    # 无法区分"用户设置过"与"只拿到默认值"。
+    redirection += [
+        ('General.PublicEmotion.FleetValue',
+         'General.PublicEmotion.FleetValue',
+         public_emotion_to_real_fleets_redirect),
+    ]
 
     # redirection += [
     #     (
@@ -818,6 +826,13 @@ class ConfigUpdater:
         """
         将旧配置转换为新格式。
 
+        `redirection` 支持三种形式：
+        - `(source, target)`：直接搬值。
+        - `(source, target, convert_func)`：`convert_func(value)` 转换单个值。
+        - `(source, target, migrate_func)`：`migrate_func(new, old)` 就地改写
+          `new` 并返回，适用于跨多个字段、需要看用户配置原文的迁移。
+          通过 `getattr(migrate_func, 'takes_config', False)` 声明。
+
         Args:
             old: 旧配置字典。
             new: 新配置字典。
@@ -832,6 +847,11 @@ class ConfigUpdater:
             elif len(row) == 3:
                 source, target, update_func = row
             else:
+                continue
+
+            if update_func is not None and getattr(update_func, 'takes_config', False):
+                # 迁移函数自己会读 old 写 new，逐个字段搬运在这里没有意义。
+                new = update_func(new, old)
                 continue
 
             if isinstance(source, tuple):

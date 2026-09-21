@@ -932,17 +932,16 @@
         "type": "textarea",
         "value": null
       },
-      "FleetValue": {
+      "Fleet1Value": {
         "type": "input",
         "value": 119
       },
-      "FleetRecord": {
+      "Fleet1Record": {
         "type": "datetime",
         "value": "2020-01-01 00:00:00",
-        "validate": "datetime",
-        "display": "disabled"
+        "validate": "datetime"
       },
-      "FleetControl": {
+      "Fleet1Control": {
         "type": "select",
         "value": "prevent_yellow_face",
         "option": [
@@ -952,7 +951,7 @@
           "prevent_red_face"
         ]
       },
-      "FleetRecover": {
+      "Fleet1Recover": {
         "type": "select",
         "value": "not_in_dormitory",
         "option": [
@@ -961,11 +960,239 @@
           "dormitory_floor_2"
         ]
       },
-      "FleetOath": {
+      "Fleet1Oath": {
         "type": "checkbox",
         "value": false
       },
-      "FleetOnsen": {
+      "Fleet1Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet1IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet1IgnoreShipwreck": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet2Value": {
+        "type": "input",
+        "value": 119
+      },
+      "Fleet2Record": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Fleet2Control": {
+        "type": "select",
+        "value": "prevent_yellow_face",
+        "option": [
+          "keep_exp_bonus",
+          "prevent_green_face",
+          "prevent_yellow_face",
+          "prevent_red_face"
+        ]
+      },
+      "Fleet2Recover": {
+        "type": "select",
+        "value": "not_in_dormitory",
+        "option": [
+          "not_in_dormitory",
+          "dormitory_floor_1",
+          "dormitory_floor_2"
+        ]
+      },
+      "Fleet2Oath": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet2Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet2IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet2IgnoreShipwreck": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet3Value": {
+        "type": "input",
+        "value": 119
+      },
+      "Fleet3Record": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Fleet3Control": {
+        "type": "select",
+        "value": "prevent_yellow_face",
+        "option": [
+          "keep_exp_bonus",
+          "prevent_green_face",
+          "prevent_yellow_face",
+          "prevent_red_face"
+        ]
+      },
+      "Fleet3Recover": {
+        "type": "select",
+        "value": "not_in_dormitory",
+        "option": [
+          "not_in_dormitory",
+          "dormitory_floor_1",
+          "dormitory_floor_2"
+        ]
+      },
+      "Fleet3Oath": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet3Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet3IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet3IgnoreShipwreck": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet4Value": {
+        "type": "input",
+        "value": 119
+      },
+      "Fleet4Record": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Fleet4Control": {
+        "type": "select",
+        "value": "prevent_yellow_face",
+        "option": [
+          "keep_exp_bonus",
+          "prevent_green_face",
+          "prevent_yellow_face",
+          "prevent_red_face"
+        ]
+      },
+      "Fleet4Recover": {
+        "type": "select",
+        "value": "not_in_dormitory",
+        "option": [
+          "not_in_dormitory",
+          "dormitory_floor_1",
+          "dormitory_floor_2"
+        ]
+      },
+      "Fleet4Oath": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet4Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet4IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet4IgnoreShipwreck": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet5Value": {
+        "type": "input",
+        "value": 119
+      },
+      "Fleet5Record": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Fleet5Control": {
+        "type": "select",
+        "value": "prevent_yellow_face",
+        "option": [
+          "keep_exp_bonus",
+          "prevent_green_face",
+          "prevent_yellow_face",
+          "prevent_red_face"
+        ]
+      },
+      "Fleet5Recover": {
+        "type": "select",
+        "value": "not_in_dormitory",
+        "option": [
+          "not_in_dormitory",
+          "dormitory_floor_1",
+          "dormitory_floor_2"
+        ]
+      },
+      "Fleet5Oath": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet5Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet5IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet5IgnoreShipwreck": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet6Value": {
+        "type": "input",
+        "value": 119
+      },
+      "Fleet6Record": {
+        "type": "datetime",
+        "value": "2020-01-01 00:00:00",
+        "validate": "datetime"
+      },
+      "Fleet6Control": {
+        "type": "select",
+        "value": "prevent_yellow_face",
+        "option": [
+          "keep_exp_bonus",
+          "prevent_green_face",
+          "prevent_yellow_face",
+          "prevent_red_face"
+        ]
+      },
+      "Fleet6Recover": {
+        "type": "select",
+        "value": "not_in_dormitory",
+        "option": [
+          "not_in_dormitory",
+          "dormitory_floor_1",
+          "dormitory_floor_2"
+        ]
+      },
+      "Fleet6Oath": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet6Onsen": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet6IgnoreWarning": {
+        "type": "checkbox",
+        "value": false
+      },
+      "Fleet6IgnoreShipwreck": {
         "type": "checkbox",
         "value": false
       }

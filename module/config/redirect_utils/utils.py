@@ -13,7 +13,20 @@
 - 服务器名称规范化
 """
 
+from module.config.deep import deep_get, deep_set
 from module.config.server import to_server
+from module.config.utils import filepath_args, read_file
+
+# 参数默认值只在真正需要迁移时读一次：args.json 很大，而迁移是极少数情况。
+_argument_defaults = None
+
+
+def template_defaults():
+    """读参数 schema 里的默认值，用于判断某个字段是否还被用户动过。"""
+    global _argument_defaults
+    if _argument_defaults is None:
+        _argument_defaults = read_file(filepath_args())
+    return _argument_defaults
 
 
 def upload_redirect(value):
@@ -165,3 +178,50 @@ def execute_fixed_patrol_scan_redirect(value):
         return int(value) > 0
     except (TypeError, ValueError):
         return bool(value)
+
+
+def public_emotion_to_real_fleets_redirect(new, old):
+    """把共用心情的旧单槽位配置迁移到按真实舰队拆分的字段。
+
+    拆分前 `General.PublicEmotion.Fleet*` 只表示一支舰队（当时的"共享池"）。
+    迁移后每支**真实舰队**各有独立的 Value/Record/Control/Recover/Oath/Onsen，
+    `FleetN` 里的 N 是编队界面里的第几支舰队。
+
+    只有当**用户配置文件里真的存在**旧字段、**且目标字段还停在模板默认值**时才迁移：
+
+    - 不能用 `new` 判断旧字段是否存在：`new` 是合并模板默认值之后的字典，新字段总是
+      存在（拿到的是模板默认值），否则会把默认值当成用户设置；
+    - 也不能只看 `old` 里有没有旧字段：配置是按"逐条合并修改"写回文件的，schema 里
+      删掉的老字段会一直留在用户文件里，于是迁移每次加载都会重跑，把脚本已经记上账的
+      新值覆盖回旧值（实测把 `Fleet1Value` 从 100 顶回 0、记录时间倒回两天前）；
+    - 也不能只看 `old` 里有没有新字段：保存配置会把整个 schema 落盘，新字段可能只是
+      被写了一份模板默认值，那时该迁移却会被跳过。
+
+    旧配置表达不出它对应的是哪一支真实舰队，这里统按舰队 1 迁移；
+    这是尽力而为的映射，用户核对后可在界面上改到正确的舰队。
+    其余舰队保持默认，不会平白多出几份心情。
+
+    Args:
+        new (dict): 合并默认值后的新配置，会被就地修改。
+        old (dict): 用户配置文件读出的原始配置。
+
+    Returns:
+        dict: 迁移后的新配置。
+    """
+    base = 'General.PublicEmotion'
+    if deep_get(old, f'{base}.FleetValue') is None:
+        # 用户从未用过共用心情，新字段保持默认。
+        return new
+    defaults = template_defaults()
+    for suffix in ('Value', 'Record', 'Control', 'Recover', 'Oath', 'Onsen'):
+        value = deep_get(old, f'{base}.Fleet{suffix}')
+        target = f'{base}.Fleet1{suffix}'
+        if value is None or deep_get(new, target) != deep_get(defaults, f'{target}.value'):
+            # 目标字段已经不是默认值：说明它被记账或手改过，不再拿旧值覆盖。
+            continue
+        deep_set(new, keys=target, value=value)
+    return new
+
+
+# 声明签名是 (new, old)，由 ConfigUpdater.config_redirect 识别并单独派发。
+public_emotion_to_real_fleets_redirect.takes_config = True

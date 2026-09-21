@@ -1062,46 +1062,249 @@
   "PublicEmotion": {
     "_info": {
       "name": "共用心情",
-      "help": "可使用同一队伍完成多项任务\n使用该功能时请确保相应任务的舰队职能为单队全清，且队伍为共用队伍"
+      "help": "多支任务复用同一支舰队时，按实际舰队分别计算心情\n每个任务在下方「实际舰队」里声明自己的道中队对应哪一支舰队，同一个实际舰队被多个任务复用时共享同一份心情"
     },
     "Enable": {
       "name": "启用共用心情功能",
-      "help": "启用后将使用共用心情，以下心情配置将代替原配置"
+      "help": "启用后按实际舰队计算心情，下方各实际舰队的心情配置将代替任务图设置里的舰队心情配置"
     },
     "Tasks": {
       "name": "共用心情任务",
       "help": "选择使用共用心情的任务，用半角逗号隔开，如\"Main, Event, EventA\"\n主线图-1: Main, 主线图-2: Main2, 主线图-3: Main3\n活动图-1: Event, 活动图-2: Event2, 作战档案: WarArchives\n每日A图: EventA, 每日B图: EventB, 每日C图: EventC, 每日D图: EventD, 每日SP图: EventSp"
     },
-    "FleetValue": {
-      "name": "心情值",
+    "Fleet1Value": {
+      "name": "舰队1 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet1Record": {
+      "name": "舰队1 心情记录时间",
       "help": ""
     },
-    "FleetRecord": {
-      "name": "心情记录时间",
-      "help": ""
-    },
-    "FleetControl": {
-      "name": "心情控制",
+    "Fleet1Control": {
+      "name": "舰队1 心情控制",
       "help": "",
       "keep_exp_bonus": "保持经验加成 (>120)",
       "prevent_green_face": "防止绿脸 (>40)",
       "prevent_yellow_face": "防止黄脸 (>30)",
       "prevent_red_face": "防止红脸 (>0)"
     },
-    "FleetRecover": {
-      "name": "心情回复",
+    "Fleet1Recover": {
+      "name": "舰队1 心情回复",
       "help": "",
       "not_in_dormitory": "未放置于后宅 (20/h)",
       "dormitory_floor_1": "后宅一层 (40/h)",
       "dormitory_floor_2": "后宅二层 (50/h)"
     },
-    "FleetOath": {
-      "name": "全员已婚 (+10/h)",
+    "Fleet1Oath": {
+      "name": "舰队1 全员已婚 (+10/h)",
       "help": ""
     },
-    "FleetOnsen": {
-      "name": "全员已放置温泉 (+10/h)",
+    "Fleet1Onsen": {
+      "name": "舰队1 全员已放置温泉 (+10/h)",
       "help": ""
+    },
+    "Fleet1IgnoreWarning": {
+      "name": "舰队1 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet1IgnoreShipwreck": {
+      "name": "舰队1 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
+    },
+    "Fleet2Value": {
+      "name": "舰队2 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet2Record": {
+      "name": "舰队2 心情记录时间",
+      "help": ""
+    },
+    "Fleet2Control": {
+      "name": "舰队2 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120)",
+      "prevent_green_face": "防止绿脸 (>40)",
+      "prevent_yellow_face": "防止黄脸 (>30)",
+      "prevent_red_face": "防止红脸 (>0)"
+    },
+    "Fleet2Recover": {
+      "name": "舰队2 心情回复",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h)",
+      "dormitory_floor_1": "后宅一层 (40/h)",
+      "dormitory_floor_2": "后宅二层 (50/h)"
+    },
+    "Fleet2Oath": {
+      "name": "舰队2 全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "舰队2 全员已放置温泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet2IgnoreWarning": {
+      "name": "舰队2 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet2IgnoreShipwreck": {
+      "name": "舰队2 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
+    },
+    "Fleet3Value": {
+      "name": "舰队3 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet3Record": {
+      "name": "舰队3 心情记录时间",
+      "help": "由程序在每次记账时自动更新，无需手动修改"
+    },
+    "Fleet3Control": {
+      "name": "舰队3 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120)",
+      "prevent_green_face": "防止绿脸 (>40)",
+      "prevent_yellow_face": "防止黄脸 (>30)",
+      "prevent_red_face": "防止红脸 (>0)"
+    },
+    "Fleet3Recover": {
+      "name": "舰队3 心情回复",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h)",
+      "dormitory_floor_1": "后宅一层 (40/h)",
+      "dormitory_floor_2": "后宅二层 (50/h)"
+    },
+    "Fleet3Oath": {
+      "name": "舰队3 全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet3Onsen": {
+      "name": "舰队3 全员已放置温泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet3IgnoreWarning": {
+      "name": "舰队3 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet3IgnoreShipwreck": {
+      "name": "舰队3 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
+    },
+    "Fleet4Value": {
+      "name": "舰队4 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet4Record": {
+      "name": "舰队4 心情记录时间",
+      "help": "由程序在每次记账时自动更新，无需手动修改"
+    },
+    "Fleet4Control": {
+      "name": "舰队4 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120)",
+      "prevent_green_face": "防止绿脸 (>40)",
+      "prevent_yellow_face": "防止黄脸 (>30)",
+      "prevent_red_face": "防止红脸 (>0)"
+    },
+    "Fleet4Recover": {
+      "name": "舰队4 心情回复",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h)",
+      "dormitory_floor_1": "后宅一层 (40/h)",
+      "dormitory_floor_2": "后宅二层 (50/h)"
+    },
+    "Fleet4Oath": {
+      "name": "舰队4 全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet4Onsen": {
+      "name": "舰队4 全员已放置温泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet4IgnoreWarning": {
+      "name": "舰队4 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet4IgnoreShipwreck": {
+      "name": "舰队4 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
+    },
+    "Fleet5Value": {
+      "name": "舰队5 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet5Record": {
+      "name": "舰队5 心情记录时间",
+      "help": "由程序在每次记账时自动更新，无需手动修改"
+    },
+    "Fleet5Control": {
+      "name": "舰队5 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120)",
+      "prevent_green_face": "防止绿脸 (>40)",
+      "prevent_yellow_face": "防止黄脸 (>30)",
+      "prevent_red_face": "防止红脸 (>0)"
+    },
+    "Fleet5Recover": {
+      "name": "舰队5 心情回复",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h)",
+      "dormitory_floor_1": "后宅一层 (40/h)",
+      "dormitory_floor_2": "后宅二层 (50/h)"
+    },
+    "Fleet5Oath": {
+      "name": "舰队5 全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet5Onsen": {
+      "name": "舰队5 全员已放置温泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet5IgnoreWarning": {
+      "name": "舰队5 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet5IgnoreShipwreck": {
+      "name": "舰队5 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
+    },
+    "Fleet6Value": {
+      "name": "舰队6 心情值",
+      "help": "由程序按时间自动推算，无需手动修改"
+    },
+    "Fleet6Record": {
+      "name": "舰队6 心情记录时间",
+      "help": "由程序在每次记账时自动更新，无需手动修改"
+    },
+    "Fleet6Control": {
+      "name": "舰队6 心情控制",
+      "help": "",
+      "keep_exp_bonus": "保持经验加成 (>120)",
+      "prevent_green_face": "防止绿脸 (>40)",
+      "prevent_yellow_face": "防止黄脸 (>30)",
+      "prevent_red_face": "防止红脸 (>0)"
+    },
+    "Fleet6Recover": {
+      "name": "舰队6 心情回复",
+      "help": "",
+      "not_in_dormitory": "未放置于后宅 (20/h)",
+      "dormitory_floor_1": "后宅一层 (40/h)",
+      "dormitory_floor_2": "后宅二层 (50/h)"
+    },
+    "Fleet6Oath": {
+      "name": "舰队6 全员已婚 (+10/h)",
+      "help": ""
+    },
+    "Fleet6Onsen": {
+      "name": "舰队6 全员已放置温泉 (+10/h)",
+      "help": ""
+    },
+    "Fleet6IgnoreWarning": {
+      "name": "舰队6 无视红脸出击警告",
+      "help": "开启后该舰队红脸时不再中断任务（保底撤退与心情清零），照常继续出击"
+    },
+    "Fleet6IgnoreShipwreck": {
+      "name": "舰队6 无视沉船心情惩罚",
+      "help": "开启后该舰队沉船带来的额外 10 点心情扣减不再计入"
     }
   },
   "YukikazeTaskManager": {

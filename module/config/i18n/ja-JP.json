@@ -1062,46 +1062,249 @@
   "PublicEmotion": {
     "_info": {
       "name": "コンディション共用",
-      "help": "同じ艦隊を使用して複数のタスクを完了できます\nこの機能を使用する場合は、対応するタスクの艦隊設定がすべての単独チームであり、その艦隊が共有艦隊であることを確認してください。"
+      "help": "複数のタスクが同じ艦隊を使い回す場合に、実際の艦隊ごとにコンディションを計算します\n各タスクは下の「実際の艦隊」で自分の道中艦隊がどちらの艦隊かを宣言します。同じ実際の艦隊を使うタスクはコンディションを共有します"
     },
     "Enable": {
       "name": "コンディション共有を有効にする",
-      "help": "有効にすると共有コンディションが使用され、以下のコンディション設定が元の設定を上書きします。"
+      "help": "有効にすると実際の艦隊ごとにコンディションを計算します。以下のコンディション設定が各タスクページの艦隊コンディション設定を置き換えます"
     },
     "Tasks": {
       "name": "コンディションを共有するタスク",
       "help": "コンディションを共有するタスクを半角カンマ区切りで選択します。例：「Main、Event、EventA」\nメインステージ-1: Main、メインステージ-2: Main2、メインステージ: Main3\nイベントマップ-1: Event、イベントマップ-2: Event2、作戦アーカイブ: WarArchives\nデイリーAマップ: EventA、デイリーBマップ: EventB、デイリーCマップ: EventC、デイリーDマップ: EventD、デイリーSPマップ: EventSp"
     },
-    "FleetValue": {
-      "name": "コンディション値",
+    "Fleet1Value": {
+      "name": "第1艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet1Record": {
+      "name": "第1艦隊 コンディション記録時間",
       "help": ""
     },
-    "FleetRecord": {
-      "name": "コンディション記録時間",
-      "help": ""
-    },
-    "FleetControl": {
-      "name": "コンディション制御",
+    "Fleet1Control": {
+      "name": "第1艦隊 コンディション制御",
       "help": "",
       "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
       "prevent_green_face": "緑顔を防ぐ (>40)",
       "prevent_yellow_face": "黄顔を防ぐ (>30)",
       "prevent_red_face": "赤顔を防ぐ (>0)"
     },
-    "FleetRecover": {
-      "name": "コンディション回復",
+    "Fleet1Recover": {
+      "name": "第1艦隊 コンディション回復",
       "help": "",
       "not_in_dormitory": "寮舎に配置していない（20/h）",
       "dormitory_floor_1": "寮舎1階（40/h）",
       "dormitory_floor_2": "寮舎2階（50/h）"
     },
-    "FleetOath": {
-      "name": "全メンバーがケッコン済み (+10/h)",
+    "Fleet1Oath": {
+      "name": "第1艦隊 全メンバーがケッコン済み (+10/h)",
       "help": ""
     },
-    "FleetOnsen": {
-      "name": "全メンバーが温泉を配置済み (+10/h)",
+    "Fleet1Onsen": {
+      "name": "第1艦隊 全メンバーが温泉を配置済み (+10/h)",
       "help": ""
+    },
+    "Fleet1IgnoreWarning": {
+      "name": "第1艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet1IgnoreShipwreck": {
+      "name": "第1艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
+    },
+    "Fleet2Value": {
+      "name": "第2艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet2Record": {
+      "name": "第2艦隊 コンディション記録時間",
+      "help": ""
+    },
+    "Fleet2Control": {
+      "name": "第2艦隊 コンディション制御",
+      "help": "",
+      "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
+      "prevent_green_face": "緑顔を防ぐ (>40)",
+      "prevent_yellow_face": "黄顔を防ぐ (>30)",
+      "prevent_red_face": "赤顔を防ぐ (>0)"
+    },
+    "Fleet2Recover": {
+      "name": "第2艦隊 コンディション回復",
+      "help": "",
+      "not_in_dormitory": "寮舎に配置していない（20/h）",
+      "dormitory_floor_1": "寮舎1階（40/h）",
+      "dormitory_floor_2": "寮舎2階（50/h）"
+    },
+    "Fleet2Oath": {
+      "name": "第2艦隊 全メンバーがケッコン済み (+10/h)",
+      "help": ""
+    },
+    "Fleet2Onsen": {
+      "name": "第2艦隊 全メンバーが温泉を配置済み (+10/h)",
+      "help": ""
+    },
+    "Fleet2IgnoreWarning": {
+      "name": "第2艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet2IgnoreShipwreck": {
+      "name": "第2艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
+    },
+    "Fleet3Value": {
+      "name": "第3艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet3Record": {
+      "name": "第3艦隊 コンディション記録時間",
+      "help": "記録のたびに自動更新されるため、手動で変更する必要はありません"
+    },
+    "Fleet3Control": {
+      "name": "第3艦隊 コンディション制御",
+      "help": "",
+      "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
+      "prevent_green_face": "緑顔を防ぐ (>40)",
+      "prevent_yellow_face": "黄顔を防ぐ (>30)",
+      "prevent_red_face": "赤顔を防ぐ (>0)"
+    },
+    "Fleet3Recover": {
+      "name": "第3艦隊 コンディション回復",
+      "help": "",
+      "not_in_dormitory": "寮舎に配置していない（20/h）",
+      "dormitory_floor_1": "寮舎1階（40/h）",
+      "dormitory_floor_2": "寮舎2階（50/h）"
+    },
+    "Fleet3Oath": {
+      "name": "第3艦隊 全メンバーがケッコン済み (+10/h)",
+      "help": ""
+    },
+    "Fleet3Onsen": {
+      "name": "第3艦隊 全メンバーが温泉を配置済み (+10/h)",
+      "help": ""
+    },
+    "Fleet3IgnoreWarning": {
+      "name": "第3艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet3IgnoreShipwreck": {
+      "name": "第3艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
+    },
+    "Fleet4Value": {
+      "name": "第4艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet4Record": {
+      "name": "第4艦隊 コンディション記録時間",
+      "help": "記録のたびに自動更新されるため、手動で変更する必要はありません"
+    },
+    "Fleet4Control": {
+      "name": "第4艦隊 コンディション制御",
+      "help": "",
+      "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
+      "prevent_green_face": "緑顔を防ぐ (>40)",
+      "prevent_yellow_face": "黄顔を防ぐ (>30)",
+      "prevent_red_face": "赤顔を防ぐ (>0)"
+    },
+    "Fleet4Recover": {
+      "name": "第4艦隊 コンディション回復",
+      "help": "",
+      "not_in_dormitory": "寮舎に配置していない（20/h）",
+      "dormitory_floor_1": "寮舎1階（40/h）",
+      "dormitory_floor_2": "寮舎2階（50/h）"
+    },
+    "Fleet4Oath": {
+      "name": "第4艦隊 全メンバーがケッコン済み (+10/h)",
+      "help": ""
+    },
+    "Fleet4Onsen": {
+      "name": "第4艦隊 全メンバーが温泉を配置済み (+10/h)",
+      "help": ""
+    },
+    "Fleet4IgnoreWarning": {
+      "name": "第4艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet4IgnoreShipwreck": {
+      "name": "第4艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
+    },
+    "Fleet5Value": {
+      "name": "第5艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet5Record": {
+      "name": "第5艦隊 コンディション記録時間",
+      "help": "記録のたびに自動更新されるため、手動で変更する必要はありません"
+    },
+    "Fleet5Control": {
+      "name": "第5艦隊 コンディション制御",
+      "help": "",
+      "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
+      "prevent_green_face": "緑顔を防ぐ (>40)",
+      "prevent_yellow_face": "黄顔を防ぐ (>30)",
+      "prevent_red_face": "赤顔を防ぐ (>0)"
+    },
+    "Fleet5Recover": {
+      "name": "第5艦隊 コンディション回復",
+      "help": "",
+      "not_in_dormitory": "寮舎に配置していない（20/h）",
+      "dormitory_floor_1": "寮舎1階（40/h）",
+      "dormitory_floor_2": "寮舎2階（50/h）"
+    },
+    "Fleet5Oath": {
+      "name": "第5艦隊 全メンバーがケッコン済み (+10/h)",
+      "help": ""
+    },
+    "Fleet5Onsen": {
+      "name": "第5艦隊 全メンバーが温泉を配置済み (+10/h)",
+      "help": ""
+    },
+    "Fleet5IgnoreWarning": {
+      "name": "第5艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet5IgnoreShipwreck": {
+      "name": "第5艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
+    },
+    "Fleet6Value": {
+      "name": "第6艦隊 コンディション値",
+      "help": "経過時間から自動計算されるため、手動で変更する必要はありません"
+    },
+    "Fleet6Record": {
+      "name": "第6艦隊 コンディション記録時間",
+      "help": "記録のたびに自動更新されるため、手動で変更する必要はありません"
+    },
+    "Fleet6Control": {
+      "name": "第6艦隊 コンディション制御",
+      "help": "",
+      "keep_exp_bonus": "経験値ボーナスを維持 (>120)",
+      "prevent_green_face": "緑顔を防ぐ (>40)",
+      "prevent_yellow_face": "黄顔を防ぐ (>30)",
+      "prevent_red_face": "赤顔を防ぐ (>0)"
+    },
+    "Fleet6Recover": {
+      "name": "第6艦隊 コンディション回復",
+      "help": "",
+      "not_in_dormitory": "寮舎に配置していない（20/h）",
+      "dormitory_floor_1": "寮舎1階（40/h）",
+      "dormitory_floor_2": "寮舎2階（50/h）"
+    },
+    "Fleet6Oath": {
+      "name": "第6艦隊 全メンバーがケッコン済み (+10/h)",
+      "help": ""
+    },
+    "Fleet6Onsen": {
+      "name": "第6艦隊 全メンバーが温泉を配置済み (+10/h)",
+      "help": ""
+    },
+    "Fleet6IgnoreWarning": {
+      "name": "第6艦隊 赤面警告を無視",
+      "help": "コンディション低下の警告が出てもタスクを中断せず（撤退とリセットを行わず）、そのまま出撃を続けます"
+    },
+    "Fleet6IgnoreShipwreck": {
+      "name": "第6艦隊 沈没ペナルティを無視",
+      "help": "この艦隊が沈没したときの追加 10 ポイントをコンディションから差し引きません"
     }
   },
   "YukikazeTaskManager": {
