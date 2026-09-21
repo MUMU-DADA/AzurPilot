@@ -31,6 +31,7 @@ import { api } from '../api/client'
 import type { StatisticsReport } from '../api/types'
 import type { Parameters } from '../api/generated'
 import { useApp, useConnection } from '../app/context'
+import { AUTO_REFRESH_OPTIONS, readAutoRefresh, shouldAutoRefresh, writeAutoRefresh, type AutoRefresh } from '../app/statisticsPrefs'
 import { usesLegacyLayout } from '../app/theme'
 import { ErrorBox, Loading, PageTitle } from '../components/ui'
 import { SegmentedControl } from '../components/SegmentedControl'
@@ -90,6 +91,8 @@ export function Statistics() {
   const [data, setData] = useState<StatisticsReport>()
   const [error, setError] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState<AutoRefresh>(readAutoRefresh)
+  const [pageHidden, setPageHidden] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden')
   // 分段控件放不下时会被压缩并横向滚动（.monitor-segmented 带 overflow-x: auto），
   // 这里按可用宽度精确判断、一旦放不下就换成下拉；右侧控件宽度随分类变化，不能用固定断点。
   const [compact, setCompact] = useState(false)
@@ -97,13 +100,36 @@ export function Statistics() {
   const toolbarRight = useRef<HTMLDivElement>(null)
   const naturalWidth = useRef(0)
   const connection = useConnection()
+  const loadedQuery = useRef('')
+  const pending = useRef(0)
   useEffect(() => {
     if (connection !== 'ready') return
     let active = true
-    setData(undefined); setError('')
-    void api.request('statistics.report', {instance, category, days, month, period}).then(value => {if (active) setData(value)}).catch(error => {if (active) setError(error.message)})
+    // 换筛选条件时先清空，免得旧条件下的曲线留在屏幕上；单纯重拉（手动或自动刷新）
+    // 保留现有内容，否则自动刷新每跳一次都会闪一下加载态。
+    const query = [instance, category, days, month, period].join('|')
+    setError('')
+    if (loadedQuery.current !== query) {loadedQuery.current = query; setData(undefined)}
+    pending.current += 1
+    void api.request('statistics.report', {instance, category, days, month, period}).then(value => {if (active) setData(value)}).catch(error => {if (active) setError(error.message)}).finally(() => {pending.current -= 1})
     return () => {active = false}
   }, [instance, category, days, month, period, connection, revision])
+  // 窗口最小化或切到别的标签时暂停计时：桌面端常被丢在后台几小时，按固定间隔拉整页统计纯属浪费。
+  useEffect(() => {
+    const update = () => setPageHidden(document.visibilityState === 'hidden')
+    document.addEventListener('visibilitychange', update)
+    return () => document.removeEventListener('visibilitychange', update)
+  }, [])
+  useEffect(() => {
+    if (!shouldAutoRefresh(autoRefresh, connection, pageHidden)) return
+    const timer = window.setInterval(() => {
+      // 上一发查询没回来就跳过这一跳：查询慢于档位间隔时，重发只会让请求堆叠。
+      // 只约束自动重拉；手动点「刷新统计」不受此限——点了就立刻发一次，
+      // 若与在途请求并行，旧响应由上面 effect 的 active 标记丢弃。
+      if (!pending.current) setRevision(value => value + 1)
+    }, autoRefresh * 1000)
+    return () => window.clearInterval(timer)
+  }, [autoRefresh, connection, pageHidden])
   // 分段控件可见时记录它的自然宽度；隐藏后 clientWidth 为 0，沿用上次的值避免来回抖动。
   // 除工具栏与右侧控件外还要观察分段控件自身：切换语言会改变标签文字宽度，
   // 此时工具栏宽度没变，只有控件自己的尺寸变了。
@@ -133,6 +159,16 @@ export function Statistics() {
       setRevision(value => value + 1)
     } catch (error) {setError((error as Error).message)} finally {setRefreshing(false)}
   }
+  function changeAutoRefresh(seconds: AutoRefresh) {
+    setAutoRefresh(seconds)
+    writeAutoRefresh(seconds)
+  }
+  function autoRefreshLabel(seconds: number) {
+    if (!seconds) return ui('stats.autoRefreshOff')
+    if (seconds < 60) return ui('stats.autoRefreshSeconds', {seconds})
+    // 英文只有 1 分钟这一档要单数，单独取键。
+    return seconds === 60 ? ui('stats.autoRefreshMinute', {minutes: 1}) : ui('stats.autoRefreshMinutes', {minutes: seconds / 60})
+  }
   function download() {
     if (!data) return
     downloadCsv(`${instance}-${ui(categories[category!])}-${data.month}`, [
@@ -142,7 +178,7 @@ export function Statistics() {
       ...(data.notes.length ? [[ui('stats.notes')], ...data.notes.map(note => [note])] : []),
     ])
   }
-  const actions = <><button className="button secondary" disabled={connection !== 'ready' || refreshing} onClick={refresh}><RefreshCw size={15}/>{refreshing ? ui('stats.refreshing') : ui('stats.refresh')}</button><button className="button secondary" disabled={!data} onClick={download}><Download size={15}/>{ui('stats.exportCategory')}</button></>
+  const actions = <><label className="statistics-inline-control statistics-auto-refresh">{ui('stats.autoRefresh')}<Select aria-label={ui('stats.autoRefresh')} value={autoRefresh} onChange={event => changeAutoRefresh(Number(event.target.value) as AutoRefresh)}>{AUTO_REFRESH_OPTIONS.map(value => <option value={value} key={value}>{autoRefreshLabel(value)}</option>)}</Select></label><button className="button secondary" disabled={connection !== 'ready' || refreshing} onClick={refresh}><RefreshCw size={15}/>{refreshing ? ui('stats.refreshing') : ui('stats.refresh')}</button><button className="button secondary" disabled={!data} onClick={download}><Download size={15}/>{ui('stats.exportCategory')}</button></>
   // 只有紧凑主题把分类、时间范围与操作并成一行并置顶，其余主题维持原来的两行结构。
   const condensed = theme === 'extreme'
   const rangeControls = <>

@@ -32,6 +32,16 @@ describe('WebUI i18n', () => {
     expect(translateUi('zh-CN', 'stats.candlestickOverlay')).toBe('K 线 + 折线叠加')
   })
 
+  it('translates the auto-refresh intervals, including the English singular minute', () => {
+    expect(translateUi('en-US', 'stats.autoRefresh')).toBe('Auto refresh')
+    expect(translateUi('en-US', 'stats.autoRefreshSeconds', {seconds: 30})).toBe('30 seconds')
+    expect(translateUi('en-US', 'stats.autoRefreshMinute', {minutes: 1})).toBe('1 minute')
+    expect(translateUi('en-US', 'stats.autoRefreshMinutes', {minutes: 5})).toBe('5 minutes')
+    expect(translateUi('ja-JP', 'stats.autoRefresh')).toBe('自動更新')
+    expect(translateUi('zh-TW', 'stats.autoRefreshOff')).toBe('關閉')
+    expect(translateUi('zh-MIAO', 'stats.autoRefresh')).toBe('自动刷新')
+  })
+
   it('translates the advanced-mode script prerequisite in every UI language', () => {
     expect(translateUi('zh-CN', 'script.modeRequiresScript')).toContain('非空策略脚本')
     expect(translateUi('en-US', 'script.modeRequiresScript')).toContain('non-empty strategy script')

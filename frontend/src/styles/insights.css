@@ -52,6 +52,11 @@
   .monitor-panel .preview-screen {width:min(calc(100% - 32px),calc((100cqh - 32px)*16/9));max-height:none}
 }
 .statistics-controls {display:flex;flex-wrap:wrap;align-items:end;gap:14px;padding:18px 22px}.statistics-controls label {display:flex;flex-direction:column;gap:7px;font-size:11px;color:var(--muted)}.statistics-controls select,.statistics-controls input {max-width:200px;min-height:34px}.period-controls {padding:0 0 18px;align-items:center}.period-controls strong {margin-right:auto}.period-controls > span {font-size:12px;color:var(--muted)}
+/* 自动刷新与「刷新统计」并排，横排小标签 + 下拉；不能落在 .statistics-controls 里，那里的 label 是竖排。 */
+.statistics-auto-refresh {display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);white-space:nowrap}
+/* 操作区要能换行：多了一个控件后，紧凑主题在 390px 下这一行会比视口宽 16px。
+   宽屏放得下就不会换行，外观不变。 */
+.statistics-actions {flex-wrap:wrap}
 /* 以下工具栏规则只服务紧凑主题：分类、时间范围与操作合并为一行并置顶，滚动时仍可切换与刷新。
    非旧版版式由 body 滚动，需让开吸顶的顶栏；旧版版式的 .instance-page-main 自身滚动，贴顶即可。 */
 :root[data-theme='extreme'] .statistics-toolbar-row {position:sticky;top:var(--topbar-height);z-index:30;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;margin-bottom:12px;background:var(--bg)}
