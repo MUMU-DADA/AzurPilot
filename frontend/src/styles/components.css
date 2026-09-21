@@ -192,6 +192,16 @@
   .field-control > .edit-status {position: static; order: -1; margin: 0; max-width: 100%; transform: none}
 }
 .field-row-multiline textarea {padding: 10px 14px; background: var(--surface-muted); font-family: "Cascadia Code", "Consolas", "Microsoft YaHei", monospace}
+/* 共用心情的实际舰队面板：按实际舰队分组，字段行沿用 .field-row 的排布。 */
+.shared-emotion-fleets {border-bottom: 1px solid var(--border)}
+.shared-emotion-fleet:last-child .field-row:last-child {border-bottom: 0}
+.shared-emotion-fleet-head {display: flex; align-items: baseline; gap: 10px; padding: 13px 22px; background: var(--surface-muted); border-bottom: 1px solid var(--border)}
+.shared-emotion-fleet-head h3 {font-size: 13px; font-weight: 650}
+.shared-emotion-fleet-head p {font-size: 11px; color: var(--muted); overflow-wrap: anywhere}
+.shared-emotion-empty {padding: 19px 22px; font-size: 12px; color: var(--muted)}
+.shared-emotion-hint {margin-top: 6px; font-size: 11px; color: var(--muted); line-height: 1.7; overflow-wrap: anywhere}
+.shared-emotion-hint a {color: var(--accent); text-decoration: underline; text-underline-offset: 2px}
+.shared-emotion-warning {padding: 11px 22px; font-size: 11px; color: var(--danger, #c0392b); line-height: 1.7; border-bottom: 1px solid var(--border); overflow-wrap: anywhere}
 .yaml-editor {border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-muted); text-align: left}
 .yaml-editor:focus-within {border-color: var(--accent)}
 .editor-heading {padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11px; letter-spacing: 1px}

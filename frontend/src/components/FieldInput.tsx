@@ -15,7 +15,8 @@ export function FieldInput({id, value, onChange, type, options, disabled, label,
   const {ui} = useApp()
   const accessibility = {'aria-label': label, 'aria-invalid': invalid || undefined, 'aria-describedby': invalid ? `${id}-status` : undefined}
   // 只读时间沿用旧界面的原始文本，保留秒、小数秒和历史格式。
-  if (type === 'datetime' && disabled) return <input id={id} aria-label={label} readOnly value={String(value ?? '').replace('T', ' ')} />
+  // 同时带上 disabled，否则它看上去和可编辑输入框一样，标签上的「只读」对不上。
+  if (type === 'datetime' && disabled) return <input id={id} aria-label={label} readOnly disabled value={String(value ?? '').replace('T', ' ')} />
   if (mode === 'yaml' || type === 'yaml') return <Suspense fallback={<div role="status">{ui('field.loadingEditor')}</div>}><YamlEditor id={id} value={String(value ?? '')} onChange={onChange} disabled={disabled} label={label} invalid={invalid}/></Suspense>
   if (type === 'multiselect') return <div className="multi-options" id={id} role="group" {...accessibility}>{options?.map(option => {
     const selected = Array.isArray(value) ? value : []

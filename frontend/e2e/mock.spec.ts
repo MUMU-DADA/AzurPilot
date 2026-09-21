@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 test('玻璃装饰不阻挡导航，背景失败降级并尊重减少动态效果', async ({page}) => {
   let backgrounds = 0
@@ -658,5 +658,280 @@ test('指挥喵评分报告面板展示、刷新与空状态', async ({page}) =>
   await page.goto('/#/i/demo-alt/task/MeowfficerScore')
   await expect(page.locator('.meow-panel')).toContainText('还没跑过评分任务')
   await expect(page.locator('.meow-panel').getByRole('link', {name: '查看完整报告', exact: true})).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+/**
+ * 顶掉随机壁纸的外链请求。
+ *
+ * 页面加载要等它，而那个域名经常慢到超时（本机日志里也有 CDN 读超时），
+ * 于是 `page.goto` 的 load 事件一直不来、用例在无关的地方超时。
+ * 回一张占位图而不是 abort：中断请求会在控制台留下 ERR_FAILED，被"无错误"断言抓到。
+ */
+async function stubWallpaper(page: Page) {
+  await page.route('https://api.yppp.net/api.php', route => route.fulfill({
+    contentType: 'image/svg+xml',
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><rect width="1280" height="720" fill="#9acbff"/></svg>',
+  }))
+}
+
+// 除专门验证壁纸行为的那条用例，其余一律顶掉外链：页面 load 会等它，
+// 本机网络一慢，整批用例就在无关的地方超时（实测一次套件里能挂掉一半）。
+test.beforeEach(async ({page}, testInfo) => {
+  if (testInfo.title.includes('玻璃装饰')) return
+  await stubWallpaper(page)
+})
+
+/**
+ * 关闭共用心情并清空监控清单。
+ *
+ * mock 只有一个后端服务、所有用例按顺序共享实例配置，所以碰过共用心情的用例
+ * 用完必须还原：留着开启会让后续用例看到只读的心情字段与接管提示。
+ */
+async function disableSharedEmotion(page: Page) {
+  await page.goto('/#/i/demo-main/task/General')
+  const enable = page.locator('[id="General.PublicEmotion.Enable"]')
+  await expect(enable).toBeVisible()
+  if (await enable.getAttribute('aria-checked') === 'true') {
+    const tasks = page.locator('[id="General.PublicEmotion.Tasks"]')
+    await tasks.fill('')
+    await tasks.blur()
+    await enable.click()
+    await expect(enable).toHaveAttribute('aria-checked', 'false')
+  }
+  await expect(page.locator('.shared-emotion-fleets')).toHaveCount(0)
+  // 关闭后不渲染任何一支舰队的心情字段：配置里留着的是上一轮算出的账本值，
+  // 平铺 6 支舰队 × 6 项会让人以为还要在这里配心情。
+  await expect(page.locator('[id="General.PublicEmotion.Fleet1Value"]')).toHaveCount(0)
+  await expect(page.locator('[id="General.PublicEmotion.Fleet6Onsen"]')).toHaveCount(0)
+  // 开关与监控清单本身仍要在，否则没法再打开它。
+  await expect(enable).toBeVisible()
+  await expect(page.locator('[id="General.PublicEmotion.Tasks"]')).toBeVisible()
+}
+
+test('共用心情值同步到监控任务图的心情字段', async ({page}) => {
+  const errors: string[] = []
+  page.on('console', message => {
+    // 外链资源（壁纸、更新检查）超时是网络问题，不是应用错误，别让它把用例带崩。
+    if (message.type() === 'error' && !message.text().includes('Failed to load resource')) errors.push(message.text())
+  })
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message}`))
+  await stubWallpaper(page)
+  // 统计提交次数：镜像曾因 effect 打转而无限入队，这里留个上限兜底。
+  const methods: string[] = []
+  page.on('websocket', socket => socket.on('framesent', frame => {
+    const payload = String(frame.payload)
+    if (payload.includes('"config.patch"')) methods.push(payload)
+  }))
+
+  // 总览的共用心情：启用并指定监控任务。mock 的 Main 是一队1 二队2 两队分工。
+  await page.goto('/#/i/demo-main/task/General')
+  const enable = page.locator('[id="General.PublicEmotion.Enable"]')
+  await expect(enable).toBeVisible()
+  if (await enable.getAttribute('aria-checked') !== 'true') await enable.click()
+  const tasks = page.locator('[id="General.PublicEmotion.Tasks"]')
+  await tasks.fill('Main')
+  await tasks.blur()
+
+  // 只渲染监控任务真正用到的舰队，且每支只出现一次。
+  const panel = page.locator('.shared-emotion-fleets')
+  await expect(panel.locator('.shared-emotion-fleet')).toHaveCount(2)
+  await expect(panel.locator('.shared-emotion-fleet-head').first()).toContainText('舰队1')
+  await expect(panel.locator('.shared-emotion-fleet-head').first()).toContainText('道中队')
+  await expect(panel.locator('.shared-emotion-fleet-head').nth(1)).toContainText('舰队2')
+  await expect(panel.locator('.shared-emotion-fleet-head').nth(1)).toContainText('Boss 队')
+  await expect(page.locator('[id="General.PublicEmotion.Fleet3Value"]')).toHaveCount(0)
+  await expect(page.locator('[id="General.PublicEmotion.Fleet1Value"]')).toHaveCount(1)
+
+  // 面板排在启用开关与监控清单之后：先决定"要不要用、管哪几个任务"，
+  // 再看按真实舰队分组的心情设置，而不是一进来就是各舰队的心情。
+  const enableBox = await enable.boundingBox()
+  const tasksBox = await tasks.boundingBox()
+  const fleetBox = await panel.locator('.shared-emotion-fleet').first().boundingBox()
+  expect(tasksBox!.y).toBeGreaterThan(enableBox!.y)
+  expect(fleetBox!.y).toBeGreaterThan(tasksBox!.y + tasksBox!.height)
+
+  // 心情值可手改，记录时间是记账基准、保持只读。
+  const shared1 = page.locator('[id="General.PublicEmotion.Fleet1Value"]')
+  await expect(shared1).toBeEnabled()
+  const shared1Record = page.locator('[id="General.PublicEmotion.Fleet1Record"]')
+  await expect(shared1Record).toBeDisabled()
+  // 播种必须真的写进记录时间：只写心情值的话，后端会拿模板默认（2020-01-01）当上次
+  // 记账时间，一路推算恢复量、把刚播种的值顶到上限。这几个字段曾标着
+  // display: disabled，API 直接拒写（READ_ONLY），界面上只留一条红色错误。
+  await expect(shared1Record).not.toHaveValue('2020-01-01 00:00:00')
+  await expect(page.locator('.edit-error')).toHaveCount(0)
+  const shared2 = page.locator('[id="General.PublicEmotion.Fleet2Value"]')
+  const before = methods.length
+  await shared1.fill('77')
+  await shared1.blur()
+  await shared2.fill('66')
+  await shared2.blur()
+
+  // 任务图对应的心情字段应同步为共用值（道中→Fleet1、Boss→Fleet2），
+  // 且这几个字段在共用模式下只读。
+  await page.goto('/#/i/demo-main/task/Main')
+  await expect(page.locator('[id="Main.Emotion.Fleet1Value"]')).toHaveValue('77')
+  await expect(page.locator('[id="Main.Emotion.Fleet2Value"]')).toHaveValue('66')
+  await expect(page.locator('[id="Main.Emotion.Fleet1Control"]')).toBeDisabled()
+  // 同步不会把编辑队列打转：开启时播种两支舰队（各 2 个字段）、两次手改（各 2 个）
+  // 加上镜像（每张图 2 个），正常在 12 次以内；超过就说明计划在打转。
+  expect(methods.length - before).toBeLessThan(14)
+  expect(errors).toEqual([])
+  // 心情设置与沉船忽略已下沉到共用面板按真实舰队配置，任务级这两项被锁住。
+  await expect(page.getByRole('combobox', {name: '心情设置', exact: true})).toBeDisabled()
+  await expect(page.locator('[id="Main.Emotion.IgnoreShipwreck"]')).toBeDisabled()
+
+  // 关闭再打开界面（整页重载）不该重新播种：账本已经接管过，值要原样保留。
+  await page.goto('/#/i/demo-main/task/General')
+  await page.reload()
+  await expect(page.locator('[id="General.PublicEmotion.Fleet1Value"]')).toHaveValue('77')
+  await expect(page.locator('[id="General.PublicEmotion.Fleet2Value"]')).toHaveValue('66')
+
+  // mock 只有一个服务、所有用例按顺序共享状态，因此用完要还原：
+  // 留着共用心情开启会让后续用例看到只读的心情字段与接管提示。
+  await page.goto('/#/i/demo-main/task/General')
+  await page.locator('[id="General.PublicEmotion.Tasks"]').fill('')
+  await page.locator('[id="General.PublicEmotion.Tasks"]').blur()
+  const restore = page.locator('[id="General.PublicEmotion.Enable"]')
+  await expect(restore).toHaveAttribute('aria-checked', 'true')
+  await restore.click()
+  await expect(restore).toHaveAttribute('aria-checked', 'false')
+  await expect(page.locator('.shared-emotion-fleets')).toHaveCount(0)
+  // 关掉之后那一组按真实舰队的字段不再渲染，只剩开关与监控清单。
+  await expect(page.locator('[id="General.PublicEmotion.Fleet1Value"]')).toHaveCount(0)
+  await expect(page.locator('[id="General.PublicEmotion.Fleet2Onsen"]')).toHaveCount(0)
+})
+
+test('首次设置监控清单时按各任务心情的最小值初始化', async ({page}) => {
+  const errors: string[] = []
+  page.on('console', message => {
+    // 外链资源（壁纸、更新检查）超时是网络问题，不是应用错误，别让它把用例带崩。
+    if (message.type() === 'error' && !message.text().includes('Failed to load resource')) errors.push(message.text())
+  })
+  page.on('pageerror', error => errors.push(`pageerror: ${error.message}`))
+  await stubWallpaper(page)
+
+  // 先确保处于"未启用"状态：任务图的心情字段在共用模式下是只读的，填不进去。
+  await disableSharedEmotion(page)
+
+  // 把两个任务的出击舰队都调成舰队5、职能单队全清，让它们共用同一支真实舰队。
+  // 选舰队5 而不是舰队1：舰队1/2 的账本被前一条用例改过（那支舰队已经"接管过"），
+  // 用一支没被动过的舰队才是在测"首次接管"，否则播种本来就不会触发。
+  for (const [task, morale] of [['Main', '150'], ['Main2', '130']] as const) {
+    await page.goto(`/#/i/demo-main/task/${task}`)
+    await expect(page.locator('#group-Fleet')).toBeVisible()
+    const order = page.getByRole('combobox', {name: '舰队职能', exact: true})
+    await order.click()
+    await page.getByRole('option', {name: '一队全清二队待机', exact: true}).click()
+    await expect(order).toHaveText('一队全清二队待机')
+    const fleet1 = page.getByRole('combobox', {name: '一队使用第 X 支舰队', exact: true})
+    if (await fleet1.textContent() !== '5') {
+      await fleet1.click()
+      await page.getByRole('option', {name: '5', exact: true}).click()
+    }
+    // 该任务自己记的心情就是"任务图设置里的真实心情"。
+    const value = page.locator(`[id="${task}.Emotion.Fleet1Value"]`)
+    await value.fill(morale)
+    await value.blur()
+    await expect(value).toHaveValue(morale)
+    if (task === 'Main') {
+      // 趁机把它设成不记账的那一档 + 开着沉船忽略：加入清单后两项都要被掰回来。
+      const mode = page.getByRole('combobox', {name: '心情设置', exact: true})
+      await mode.click()
+      await page.getByRole('option', {name: '无视红脸出击警告', exact: true}).click()
+      await expect(mode).toHaveText('无视红脸出击警告')
+      const wreck = page.locator('[id="Main.Emotion.IgnoreShipwreck"]')
+      await wreck.click()
+      await expect(wreck).toHaveAttribute('aria-checked', 'true')
+    }
+  }
+
+  // 首次设置监控清单：舰队5 还没被接管过（账本仍是模板默认值），应取两支任务里较小的 130。
+  await page.goto('/#/i/demo-main/task/General')
+  const enable = page.locator('[id="General.PublicEmotion.Enable"]')
+  await expect(enable).toBeVisible()
+
+  if (await enable.getAttribute('aria-checked') !== 'true') await enable.click()
+  const tasks = page.locator('[id="General.PublicEmotion.Tasks"]')
+  await tasks.fill('Main, Main2')
+  await tasks.blur()
+
+  const panel = page.locator('.shared-emotion-fleets')
+  await expect(panel.locator('.shared-emotion-fleet')).toHaveCount(1)
+  await expect(panel.locator('.shared-emotion-fleet-head').first()).toContainText('舰队5')
+  await expect(panel.locator('.shared-emotion-fleet-head').first()).toContainText('Main · Main2')
+  await expect(page.locator('[id="General.PublicEmotion.Fleet5Value"]')).toHaveValue('130')
+
+  // 接管时各任务图的心情被统一到该值——这正是"移除任务不会出现分歧"的前提。
+  for (const task of ['Main', 'Main2'] as const) {
+    await page.goto(`/#/i/demo-main/task/${task}`)
+    await expect(page.locator(`[id="${task}.Emotion.Fleet1Value"]`)).toHaveValue('130')
+  }
+  // 被监听的任务连"上场舰队/职能"也一起锁掉：改了等于换记账对象，
+  // 会让共用心情的播种与职能映射跟着变，两边界面互相牵动。
+  await page.goto('/#/i/demo-main/task/Main')
+  const order = page.getByRole('combobox', {name: '舰队职能', exact: true})
+  await expect(order).toBeDisabled()
+  await expect(page.getByRole('combobox', {name: '一队使用第 X 支舰队', exact: true})).toBeDisabled()
+  await expect(page.locator('.shared-emotion-hint').first()).toContainText('共用心情')
+  // 提示里的面板名是可点击的跳转，落到"总览设置 - 共用心情"分组。
+  await page.locator('.shared-emotion-hint').first().getByRole('link').click()
+  await expect(page).toHaveURL(/#\/i\/demo-main\/task\/General/)
+  await expect(page.locator('#group-PublicEmotion')).toBeVisible()
+  await page.goto('/#/i/demo-main/task/Main')
+  // 不记账的心情模式已被自动掰回「计算心情消耗」，沉船忽略也被掰回关闭；
+  // 两项在任务级都锁住——它们现在按真实舰队在共用面板里配置。
+  const mode = page.getByRole('combobox', {name: '心情设置', exact: true})
+  await expect(mode).toBeDisabled()
+  await expect(mode).toHaveText('计算心情消耗')
+  const wreck = page.locator('[id="Main.Emotion.IgnoreShipwreck"]')
+  await expect(wreck).toBeDisabled()
+  await expect(wreck).toHaveAttribute('aria-checked', 'false')
+
+  // 面板里每支真实舰队都有自己的这两项开关，可以逐支配置。
+  await page.goto('/#/i/demo-main/task/General')
+  const fleetWarning = page.locator('[id="General.PublicEmotion.Fleet5IgnoreWarning"]')
+  const fleetWreck = page.locator('[id="General.PublicEmotion.Fleet5IgnoreShipwreck"]')
+  await expect(fleetWarning).toBeVisible()
+  await expect(fleetWreck).toBeVisible()
+  await expect(fleetWarning).toHaveAttribute('aria-checked', 'false')
+  await fleetWarning.click()
+  await expect(fleetWarning).toHaveAttribute('aria-checked', 'true')
+  await fleetWarning.click()
+  await expect(fleetWarning).toHaveAttribute('aria-checked', 'false')
+
+  // 从清单里移除后立刻恢复可改：锁定只是"被监听期间"的限制。
+  await page.goto('/#/i/demo-main/task/General')
+  await tasks.fill('Main2')
+  await tasks.blur()
+  await page.goto('/#/i/demo-main/task/Main')
+  await expect(page.getByRole('combobox', {name: '舰队职能', exact: true})).toBeEnabled()
+  await expect(page.getByRole('combobox', {name: '一队使用第 X 支舰队', exact: true})).toBeEnabled()
+  await expect(page.getByRole('combobox', {name: '心情设置', exact: true})).toBeEnabled()
+  await expect(page.locator('[id="Main.Emotion.IgnoreShipwreck"]')).toBeEnabled()
+  await page.goto('/#/i/demo-main/task/General')
+  await tasks.fill('Main, Main2')
+  await tasks.blur()
+
+  // 从清单里去掉较低的那个任务：只是不再参考它，**不改写**已接管的心情。
+  // （曾经错误地重算成 150——那等于把心情往乐观方向改。）
+  await tasks.fill('Main')
+  await tasks.blur()
+  await expect(panel.locator('.shared-emotion-fleet')).toHaveCount(1)
+  await expect(page.locator('[id="General.PublicEmotion.Fleet5Value"]')).toHaveValue('130')
+
+  // 清空名单同样不改写；重新加入已接管过的舰队也不重算。
+  await tasks.fill('')
+  await tasks.blur()
+  await expect(page.locator('.shared-emotion-fleets')).toHaveCount(0)
+  // 开关还开着、清单空了：面板给空态提示，也不该顺手把 6 支舰队的字段铺出来。
+  await expect(page.locator('[id="General.PublicEmotion.Fleet5Value"]')).toHaveCount(0)
+  await tasks.fill('Main2')
+  await tasks.blur()
+  await expect(page.locator('[id="General.PublicEmotion.Fleet5Value"]')).toHaveValue('130')
+
+  // 还原 mock 状态，并断言面板消失。
+  await disableSharedEmotion(page)
   expect(errors).toEqual([])
 })
